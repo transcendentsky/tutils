@@ -35,7 +35,7 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
-def get_mylogger(level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
+def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
     logger = logging.getLogger(flag)
     logger.propagate = False
     logger.setLevel(level)
@@ -46,6 +46,47 @@ def get_mylogger(level=logging.INFO, flag="MyLogger", log_dir=None, action='k', 
         set_logger_dir(logger, log_dir, action, file_name)
     return logger
 
+def MultiLogger(logging):
+    def __init__(self, flag, mode=None, log_dir=None, *args, **kwargs):
+        """
+        mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
+        """
+        self.logger = super(MultiLogger, self).__init__(flag)
+        self.wandb = None
+        self.tb = None
+        self.step = -1       
+        
+        if type(mode) is str: mode = [mode]
+        if "wandb" in mode:
+            import wandb
+            wandb.init(project=flag)
+            wandb.watch_called = False
+            self.wandb = wandb
+        if "tb" in mode or "tensorboard" in mode:
+            from tensorboardX import SummaryWriter
+            if log_dir is None:
+                self.logger.warning(f"Failed to turn on Tensorboard due to logdir=None")
+            else:
+                writer = SummaryWriter(logdir=log_dir)
+        
+    
+    def log(self, dicts:dict={}, epoch=-1, debug=False):
+        if self.wandb is not None:
+            self.wandb.log(dicts)
+        if self.tb is not None:
+            if epoch < 0:
+                epoch = self.step
+                self.step = self.step + 1
+            for key, value in dicts.items():
+                self.tb.add_scaler(key, value, global_step=epoch)
+        
+        if debug:
+            string = f"Step:{self.step}  "
+            for key, value in dicts.items():
+                string += f"{key}:{value}"
+            self.logger.info(string)
+    
+    
 class _MyFormatter(logging.Formatter):
     def format(self, record):
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')

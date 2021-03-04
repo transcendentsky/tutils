@@ -1,4 +1,6 @@
 # Writing Framework
 
 ## Intro:
-background:
+background: 
+    existing methods -> unsolved problem -> our idea -> our method
+    

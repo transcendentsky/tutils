@@ -7,7 +7,8 @@ import numpy as np
 class CompLoss:
     """
     Comparative loss
-    InfoNCE
+    
+    InfoNCE Loss
     """
     def __int__(self, mode="contrastive"):
         self.name = ""

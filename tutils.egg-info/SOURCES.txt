@@ -1,3 +1,4 @@
+README.md
 setup.py
 tutils/__init__.py
 tutils/myfunc.py
@@ -7,12 +8,21 @@ tutils.egg-info/PKG-INFO
 tutils.egg-info/SOURCES.txt
 tutils.egg-info/dependency_links.txt
 tutils.egg-info/top_level.txt
+tutils/eval/__init__.py
+tutils/eval/_eval_batch.py
+tutils/eval/_eval_ones.py
+tutils/eval/_eval_ssim.py
 tutils/timg/__init__.py
 tutils/timg/augment.py
 tutils/timg/autoaugment.py
 tutils/timg/base_dataset.py
 tutils/timg/base_options.py
+tutils/timg/draw_heatmap.py
+tutils/timg/gaussian.py
+tutils/timg/multi_loader.py
 tutils/timg/print_img.py
+tutils/timg/print_landmark.py
 tutils/timg/tools.py
+tutils/timg/torchtools.py
 tutils/tsitk/__init__.py
 tutils/tsitk/io.py

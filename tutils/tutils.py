@@ -16,7 +16,7 @@ from pathlib import Path
 class Config(object):
     def __init__(self):
         super().__init__()
-        self.TUTILS_DEBUG = True
+        self.TUTILS_DEBUG = False
         self.TUTILS_INFO = False
         self.TUTILS_WARNING = True
 
@@ -29,9 +29,7 @@ class Config(object):
     def set_print_warning(self, setting=True):
         self.TUTILS_WARNING = setting
 
-
 tconfig = Config()
-
 
 def tprint(*s, end="\n", **kargs):
     if len(s) > 0:
@@ -157,6 +155,7 @@ def tfilename(*filenames):
     d(filename)
     parent, name = os.path.split(filename)
     if not os.path.exists(parent):
+        d(parent)
         os.makedirs(parent)
     return filename
 

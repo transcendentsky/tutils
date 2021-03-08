@@ -1,0 +1,9 @@
+dataset_pth : '../../dataset/Cephalometric/'
+runs_dir: '/data/quanquan/oneshot/runs/'
+batch_size : 16
+num_workers : 8
+num_landmarks : 19
+learning_rate : 0.0003
+decay_step : 150
+decay_gamma : 0.1
+num_epochs : 100

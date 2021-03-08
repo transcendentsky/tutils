@@ -16,18 +16,21 @@ from pathlib import Path
 class Config(object):
     def __init__(self):
         super().__init__()
-        self.TUTILS_DEBUG = True
+        self.TUTILS_DEBUG = False
         self.TUTILS_INFO = False
         self.TUTILS_WARNING = True
 
     def set_print_debug(self, setting=True):
         self.TUTILS_DEBUG = setting
+        tprint("Set TUTILS_DEBUG: ", self.TUTILS_DEBUG)
 
     def set_print_info(self, setting=True):
         self.TUTILS_INFO = setting
+        tprint("Set TUTILS_INFO: ", self.TUTILS_INFO)
 
     def set_print_warning(self, setting=True):
         self.TUTILS_WARNING = setting
+        tprint("Set TUTILS_WARNING: ", self.TUTILS_WARNING)
 
 
 tconfig = Config()
@@ -82,7 +85,7 @@ def tfunctime(func):
         t1 = time.time()
         ret = func(*argv, **kargs)
         t2 = time.time()
-        print(f"[Running time] {(t2-t1):.4f}s")
+        print(f"[Function {func.__name__}] Running time:{(t2-t1):.6f}s")
         return ret
     return run
 
@@ -126,11 +129,12 @@ def tdir(*dir_paths):
         else:
             return name
     if len(dir_paths) <= 1:
-        return dir_paths[0]
-    names = [dir_paths[0]]
-    for name in dir_paths[1:]:
-        names.append(checkslash(name))
-    dir_path = os.path.join(*names)
+        dir_path = dir_paths[0]
+    else:
+        names = [dir_paths[0]]
+        for name in dir_paths[1:]:
+            names.append(checkslash(name))
+        dir_path = os.path.join(*names)
     d(dir_path)
     if not os.path.exists(dir_path):
         d("Create Dir Path: ", dir_path)
@@ -149,14 +153,16 @@ def tfilename(*filenames):
             return name
 
     if len(filenames) <= 1:
-        return filenames[0]
-    names = [filenames[0]]
-    for name in filenames[1:]:
-        names.append(checkslash(name))
-    filename = os.path.join(*names)
+        filename = filenames[0]
+    else:
+        names = [filenames[0]]
+        for name in filenames[1:]:
+            names.append(checkslash(name))
+        filename = os.path.join(*names)
     d(filename)
     parent, name = os.path.split(filename)
     if not os.path.exists(parent):
+        d("make dirs:", parent)
         os.makedirs(parent)
     return filename
 
@@ -185,8 +191,8 @@ def add_total(tuple1, tuple2):
 
 
 if __name__ == "__main__":
-    tt()
-    tfilename("dasd", "/dasdsa", "/dsad")
-    print(tfilename("test.jpg"))
+    # tt()
+    # tfilename("dasd", "/dasdsa", "/dsad")
+    # print(tfilename("test.jpg"))
     # tdir("dasd", "/dsadads", "/dsdas")
-    d(wtf="dsa")
+    d(adadada="tutils")

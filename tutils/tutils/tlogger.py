@@ -30,6 +30,7 @@ from datetime import datetime
 from six.moves import input
 from termcolor import colored
 import yaml
+import datetime
 import yamlloader
 from pathlib import Path
 
@@ -47,7 +48,7 @@ def trans_init(args, mode=None):
     with open(args.config) as f:
         config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     # Create runs dir
-    tag = str(datetime.now()).replace(' ', '-') if args.tag == '' else args.tag
+    tag = str(datetime.datetime.now()).replace(' ', '-') if args.tag == '' else args.tag
     runs_dir = config['runs_dir'] + tag
     runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
@@ -85,7 +86,6 @@ class MultiLogger(Logger):
         self.step = -1
         self.log_dir = log_dir
         
-        if mode == None: mode = []
         if type(mode) is str: mode = [mode]
         if "wandb" in mode:
             import wandb

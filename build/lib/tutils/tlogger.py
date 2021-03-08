@@ -20,6 +20,7 @@
 '''
 import errno
 import logging
+from logging import Logger
 import os
 import os.path
 import shutil
@@ -28,6 +29,9 @@ from logging import INFO, DEBUG, WARNING, CRITICAL, ERROR
 from datetime import datetime
 from six.moves import input
 from termcolor import colored
+import yaml
+import yamlloader
+from pathlib import Path
 
 INFO = INFO
 DEBUG = DEBUG
@@ -35,27 +39,53 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
-def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
-    logger = logging.getLogger(flag)
-    logger.propagate = False
-    logger.setLevel(level)
-    handler = logging.StreamHandler()
-    handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
-    logger.addHandler(handler)
-    if log_dir is not None:
-        set_logger_dir(logger, log_dir, action, file_name)
-    return logger
+def trans_init(args, mode=None):
+    """
+    logger, config, tag, runs_dir = trans_init(args)
+    """
+    # Load yaml config file
+    with open(args.config) as f:
+        config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+    # Create runs dir
+    tag = str(datetime.now()).replace(' ', '-') if args.tag == '' else args.tag
+    runs_dir = config['runs_dir'] + tag
+    runs_path = Path(runs_dir)
+    config['runs_dir'] = runs_dir
+    config['tag'] = tag
+    if not runs_path.exists():
+        runs_path.mkdir()
+    # Create Logger
+    # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
+    logger = MultiLogger(log_dir=runs_dir, mode=mode)
+    logger.info(config)
 
-def MultiLogger(logging):
-    def __init__(self, flag, mode=None, log_dir=None, *args, **kwargs):
+    return logger, config, tag, runs_dir
+
+# def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
+#     logger = logging.getLogger(flag)
+#     if multi:
+#         logger = MultiLogger(flag=flag, mode="tb", log_dir=log_dir)
+#     logger.propagate = False
+#     logger.setLevel(level)
+#     handler = logging.StreamHandler()
+#     handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
+#     logger.addHandler(handler)
+#     if log_dir is not None:
+#         set_logger_dir(logger, log_dir, action, file_name)
+#     return logger
+
+class MultiLogger(Logger):
+    def __init__(self, log_dir, mode=None, flag="MyLogger", level=logging.INFO, action='k', file_name='log.log'):
         """
         mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
         """
-        self.logger = super(MultiLogger, self).__init__(flag)
+        super(MultiLogger, self).__init__(flag)
         self.wandb = None
         self.tb = None
-        self.step = -1       
+        self.step = -1
+        self.log_dir = log_dir
         
+        if mode == None: mode = []
         if type(mode) is str: mode = [mode]
         if "wandb" in mode:
             import wandb
@@ -68,8 +98,16 @@ def MultiLogger(logging):
                 self.logger.warning(f"Failed to turn on Tensorboard due to logdir=None")
             else:
                 writer = SummaryWriter(logdir=log_dir)
+                
+        # --------- Standard init
         
-    
+        self.propagate = False
+        self.setLevel(level)
+        handler = logging.StreamHandler()
+        handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
+        self.addHandler(handler)
+        set_logger_dir(self, log_dir, action, file_name)
+
     def log(self, dicts:dict={}, epoch=-1, debug=False):
         if self.wandb is not None:
             self.wandb.log(dicts)
@@ -85,7 +123,7 @@ def MultiLogger(logging):
             for key, value in dicts.items():
                 string += f"{key}:{value}"
             self.logger.info(string)
-    
+
     
 class _MyFormatter(logging.Formatter):
     def format(self, record):

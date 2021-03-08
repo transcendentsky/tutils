@@ -24,5 +24,8 @@ tutils/timg/print_img.py
 tutils/timg/print_landmark.py
 tutils/timg/tools.py
 tutils/timg/torchtools.py
+tutils/tloss/__init__.py
+tutils/tloss/entropy_loss.py
+tutils/tloss/infonce_loss.py
 tutils/tsitk/__init__.py
 tutils/tsitk/io.py

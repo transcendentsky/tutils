@@ -4,6 +4,7 @@
 # from . import tsitk
 # from . import myfunc
 # from . import tlogger
+from tutils.tutils import tfilename
 
 from tutils.tutils import *
 from tutils import eval

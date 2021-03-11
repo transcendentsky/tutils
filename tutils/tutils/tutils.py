@@ -74,45 +74,20 @@ def tfuncname(func):
         return ret
     return run
 
-
-def tfunctime(func):
-    def run(*argv, **kargs):
-        t1 = time.time()
-        ret = func(*argv, **kargs)
-        t2 = time.time()
-        print(f"[Function {func.__name__}] Running time:{(t2-t1):.6f}s")
-        return ret
-    return run
-
-@tfunctime
-@tfuncname
-def tt():
-    # print("[Trans Utils] ", end="")
-    c = 0
-    for i in range(1000000):
-        c += 1
-    print("just for test")
-    pass
-
-
 def time_now():
-    tt()
     return time.strftime("%Y%m%d-%H%M%S", time.localtime())
 
 
 def generate_random_str(n: int = 6):
-    tt()
     ran_str = ''.join(random.sample(string.ascii_letters + string.digits, n))
     return ran_str
 
 
 def generate_name():
-    tt()
     return time_now() + '-' + generate_random_str(6)
 
 
 # def write_image_np(image, filename):
-#     tt()
 #     cv2.imwrite("wc_" + generate_random_str(5)+'-'+ time_now() +".jpg", image.astype(np.uint8))
 #     pass
 
@@ -184,8 +159,4 @@ def add_total(tuple1, tuple2):
 
 
 if __name__ == "__main__":
-    # tt()
-    # tfilename("dasd", "/dasdsa", "/dsad")
-    # print(tfilename("test.jpg"))
-    # tdir("dasd", "/dsadads", "/dsdas")
     d(adadada="tutils")

@@ -1,0 +1,2 @@
+pyradiomics/examples/helloFeatureClass
+pyradiomics/notebooks/helloFeatureClass

@@ -22,19 +22,14 @@ class Config(object):
 
     def set_print_debug(self, setting=True):
         self.TUTILS_DEBUG = setting
-        tprint("Set TUTILS_DEBUG: ", self.TUTILS_DEBUG)
 
     def set_print_info(self, setting=True):
         self.TUTILS_INFO = setting
-        tprint("Set TUTILS_INFO: ", self.TUTILS_INFO)
 
     def set_print_warning(self, setting=True):
         self.TUTILS_WARNING = setting
-        tprint("Set TUTILS_WARNING: ", self.TUTILS_WARNING)
-
 
 tconfig = Config()
-
 
 def tprint(*s, end="\n", **kargs):
     if len(s) > 0:
@@ -79,48 +74,20 @@ def tfuncname(func):
         return ret
     return run
 
-
-def tfunctime(func):
-    def run(*argv, **kargs):
-        t1 = time.time()
-        ret = func(*argv, **kargs)
-        t2 = time.time()
-        print(f"[Function {func.__name__}] Running time:{(t2-t1):.6f}s")
-        return ret
-    return run
-
-# def ttimer(funcstart_time=0):
-    
-
-@tfunctime
-@tfuncname
-def tt():
-    # print("[Trans Utils] ", end="")
-    c = 0
-    for i in range(1000000):
-        c += 1
-    print("just for test")
-    pass
-
-
 def time_now():
-    tt()
     return time.strftime("%Y%m%d-%H%M%S", time.localtime())
 
 
 def generate_random_str(n: int = 6):
-    tt()
     ran_str = ''.join(random.sample(string.ascii_letters + string.digits, n))
     return ran_str
 
 
 def generate_name():
-    tt()
     return time_now() + '-' + generate_random_str(6)
 
 
 # def write_image_np(image, filename):
-#     tt()
 #     cv2.imwrite("wc_" + generate_random_str(5)+'-'+ time_now() +".jpg", image.astype(np.uint8))
 #     pass
 
@@ -132,12 +99,11 @@ def tdir(*dir_paths):
         else:
             return name
     if len(dir_paths) <= 1:
-        dir_path = dir_paths[0]
-    else:
-        names = [dir_paths[0]]
-        for name in dir_paths[1:]:
-            names.append(checkslash(name))
-        dir_path = os.path.join(*names)
+        return dir_paths[0]
+    names = [dir_paths[0]]
+    for name in dir_paths[1:]:
+        names.append(checkslash(name))
+    dir_path = os.path.join(*names)
     d(dir_path)
     if not os.path.exists(dir_path):
         d("Create Dir Path: ", dir_path)
@@ -156,16 +122,15 @@ def tfilename(*filenames):
             return name
 
     if len(filenames) <= 1:
-        filename = filenames[0]
-    else:
-        names = [filenames[0]]
-        for name in filenames[1:]:
-            names.append(checkslash(name))
-        filename = os.path.join(*names)
+        return filenames[0]
+    names = [filenames[0]]
+    for name in filenames[1:]:
+        names.append(checkslash(name))
+    filename = os.path.join(*names)
     d(filename)
     parent, name = os.path.split(filename)
     if not os.path.exists(parent):
-        d("make dirs:", parent)
+        d(parent)
         os.makedirs(parent)
     return filename
 
@@ -194,8 +159,4 @@ def add_total(tuple1, tuple2):
 
 
 if __name__ == "__main__":
-    # tt()
-    # tfilename("dasd", "/dasdsa", "/dsad")
-    # print(tfilename("test.jpg"))
-    # tdir("dasd", "/dsadads", "/dsdas")
     d(adadada="tutils")

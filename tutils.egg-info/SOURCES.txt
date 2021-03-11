@@ -1,9 +1,6 @@
 README.md
 setup.py
 tutils/__init__.py
-tutils/myfunc.py
-tutils/tlogger.py
-tutils/tutils.py
 tutils.egg-info/PKG-INFO
 tutils.egg-info/SOURCES.txt
 tutils.egg-info/dependency_links.txt
@@ -27,5 +24,13 @@ tutils/timg/torchtools.py
 tutils/tloss/__init__.py
 tutils/tloss/entropy_loss.py
 tutils/tloss/infonce_loss.py
+tutils/tradio/__init__.py
+tutils/tradio/demo.py
+tutils/tradio/example_helloFeatureClass.py
 tutils/tsitk/__init__.py
 tutils/tsitk/io.py
+tutils/tutils/__init__.py
+tutils/tutils/timer.py
+tutils/tutils/tlogger.py
+tutils/tutils/tlogger_bk.py
+tutils/tutils/tutils.py

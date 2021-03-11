@@ -4,6 +4,7 @@ import cv2
 import torch
 from PIL import Image
 from tutils.tutils import d
+import torchvision
 
 # def print_img_with_reprocess(img, img_type, fname=None):
 #     # print("Printing Imgs with Reprocess")
@@ -13,7 +14,12 @@ from tutils.tutils import d
 #     assert np.ndim(img) <= 3
 #     img = reprocess_auto(img, img_type=img_type)
 #     print_img_np(img, img_type, fname=fname)
-
+def torchvision_save(tensor:torch.Tensor, fname):
+    """
+    Recommended: 
+    tensor: [b, 3, m,n], multiple images be saved in one file.
+    """
+    torchvision.utils.save_image(tensor, fname)
 
 def print_img_auto(img, img_type='ori', is_gt=True, fname=None):
     # print("[Warning] Pause to use print img, "); return

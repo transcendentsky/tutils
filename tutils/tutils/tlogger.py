@@ -32,6 +32,10 @@ from termcolor import colored
 import yaml
 import yamlloader
 from pathlib import Path
+import argparse
+import sys
+# import traceback
+# from typing import List, Dict
 
 INFO = INFO
 DEBUG = DEBUG
@@ -39,15 +43,26 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
-def trans_init(args, mode=None):
+def trans_init(args=None, mode=None):
     """
     logger, config, tag, runs_dir = trans_init(args)
     """
     # Load yaml config file
-    with open(args.config) as f:
-        config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+    if args == None: 
+        config=dict({'runs_dir':'./'})
+    else:
+        try:
+            with open(args.config) as f:
+                config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+        except AttributeError as e:
+            print(sys.exc_info())
+            config = dict({'runs_dir':'./'})
+        except Exception as e:
+            print(sys.exc_info())
+            config = dict({'runs_dir':'./'})
+            
     # Create runs dir
-    tag = str(datetime.now()).replace(' ', '-') if args.tag == '' else args.tag
+    tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
     runs_dir = config['runs_dir'] + tag
     runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
@@ -108,7 +123,7 @@ class MultiLogger(Logger):
         self.addHandler(handler)
         set_logger_dir(self, log_dir, action, file_name)
 
-    def log(self, dicts:dict={}, epoch=-1, debug=False):
+    def tlog(self, dicts:dict={}, epoch=-1, debug=False):
         if self.wandb is not None:
             self.wandb.log(dicts)
         if self.tb is not None:
@@ -122,7 +137,7 @@ class MultiLogger(Logger):
             string = f"Step:{self.step}  "
             for key, value in dicts.items():
                 string += f"{key}:{value}"
-            self.logger.info(string)
+            self.info(string)
 
     
 class _MyFormatter(logging.Formatter):

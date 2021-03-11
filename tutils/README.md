@@ -17,3 +17,13 @@
 - draw_heatmap(points: np.ndarray, points2, fname="testtt.png")
 - draw_scatter(points, points2, fname="ttest.png", c="red")
 
+
+# Timer
+`tuils.timer`
+- tenum() -> return time, i , res
+- tfunctime -> @tfunctime -> return time, res
+
+# Logger
+`tutils.tlogger`
+- trans_init() -> return logger, config, tag, runs_dir
+- logger.info(...) -> [time @x.py] INFO ...

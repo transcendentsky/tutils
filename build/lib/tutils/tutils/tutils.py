@@ -99,11 +99,12 @@ def tdir(*dir_paths):
         else:
             return name
     if len(dir_paths) <= 1:
-        return dir_paths[0]
-    names = [dir_paths[0]]
-    for name in dir_paths[1:]:
-        names.append(checkslash(name))
-    dir_path = os.path.join(*names)
+        dir_path = dir_paths[0]
+    else:
+        names = [dir_paths[0]]
+        for name in dir_paths[1:]:
+            names.append(checkslash(name))
+        dir_path = os.path.join(*names)
     d(dir_path)
     if not os.path.exists(dir_path):
         d("Create Dir Path: ", dir_path)
@@ -120,13 +121,13 @@ def tfilename(*filenames):
             return checkslash(name)
         else:
             return name
-
     if len(filenames) <= 1:
-        return filenames[0]
-    names = [filenames[0]]
-    for name in filenames[1:]:
-        names.append(checkslash(name))
-    filename = os.path.join(*names)
+        filename = filenames[0]
+    else:
+        names = [filenames[0]]
+        for name in filenames[1:]:
+            names.append(checkslash(name))
+        filename = os.path.join(*names)
     d(filename)
     parent, name = os.path.split(filename)
     if not os.path.exists(parent):

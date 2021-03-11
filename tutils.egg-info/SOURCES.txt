@@ -4,6 +4,7 @@ tutils/__init__.py
 tutils.egg-info/PKG-INFO
 tutils.egg-info/SOURCES.txt
 tutils.egg-info/dependency_links.txt
+tutils.egg-info/requires.txt
 tutils.egg-info/top_level.txt
 tutils/eval/__init__.py
 tutils/eval/_eval_batch.py
@@ -24,6 +25,7 @@ tutils/timg/torchtools.py
 tutils/tloss/__init__.py
 tutils/tloss/entropy_loss.py
 tutils/tloss/infonce_loss.py
+tutils/tloss/pixel_level_contrastive_learning.py
 tutils/tradio/__init__.py
 tutils/tradio/demo.py
 tutils/tradio/example_helloFeatureClass.py

@@ -17,6 +17,15 @@ import torchvision.transforms.functional as TF
 """
 
 """
+def augment_multi_img(imgs=[], augment=None):
+    """
+    Just for exampling
+    """
+    raise NotImplementedError
+    params = transforms.RandomResizedCrop.get_params(img, scale=(0.1, 0.5), ratio=(0.8, 1.25))
+    patch = TF.crop(img, *params)
+    # return None
+
 def partial_augment(img, augment,mask=None):
     """
     img: PIL Image

@@ -43,23 +43,23 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
-def trans_init(args=None, mode=None):
+def trans_init(args, mode=None):
     """
     logger, config, tag, runs_dir = trans_init(args)
     """
     # Load yaml config file
     if args == None: 
-        config=dict({'runs_dir':'./'})
+        config=dict({'runs_dir':'./log/'})
     else:
         try:
             with open(args.config) as f:
                 config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
         except AttributeError as e:
             print(sys.exc_info())
-            config = dict({'runs_dir':'./'})
+            config = dict({'runs_dir':'./log/'})
         except Exception as e:
             print(sys.exc_info())
-            config = dict({'runs_dir':'./'})
+            config = dict({'runs_dir':'./log/'})
             
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
@@ -75,6 +75,23 @@ def trans_init(args=None, mode=None):
     logger.info(config)
 
     return logger, config, tag, runs_dir
+
+def trans_args():
+    parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
+    parser.add_argument("-t", "--tag", type=str, default="")
+    parser.add_argument("-c", "--config", type=str, default='config.yaml') 
+    args = parser.parse_args()
+    return args   
+
+def dump_yaml(logger, config):
+    # Backup existing yaml file
+    path = config['runs_dir'] + "/config.yaml"
+    if os.path.isfile(path):
+        backup_name = path + '.' + _get_time_str()
+        shutil.move(path, backup_name)
+        logger.info(f"Existing yaml file '{path}' backuped to '{backup_name}' ")
+    with open(path, "w") as f:
+        yaml.dump(config, f)
 
 # def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
 #     logger = logging.getLogger(flag)
@@ -123,22 +140,31 @@ class MultiLogger(Logger):
         self.addHandler(handler)
         set_logger_dir(self, log_dir, action, file_name)
 
-    def tlog(self, dicts:dict={}, epoch=-1, debug=False):
+    def tlog(self, dicts:dict={}, step=-1, verbose=False):
         if self.wandb is not None:
             self.wandb.log(dicts)
         if self.tb is not None:
-            if epoch < 0:
-                epoch = self.step
-                self.step = self.step + 1
+            if step < 0:
+                step = self.step
             for key, value in dicts.items():
-                self.tb.add_scaler(key, value, global_step=epoch)
-        
-        if debug:
-            string = f"Step:{self.step}  "
+                self.tb.add_scaler(key, value, global_step=step)
+        self.step = self.step + 1
+        if verbose:
+            string = f"[tlog] Step:{self.step}  "
             for key, value in dicts.items():
-                string += f"{key}:{value}"
+                string += f"{key}:{value};"
             self.info(string)
 
+    def add_scalar(self, key, value, global_step=-1, verbose=False):
+        if self.wandb is not None:
+            self.wandb.log({key:value})
+        if self.tb is not None:
+            if global_step < 0:
+                global_step = self.step
+            self.tb.add_scalar(key, value, global_step)
+        self.step = self.step + 1
+        if verbose:
+            self.info(f"[add_scalar] Step:{global_step}  {key}:{value}")
     
 class _MyFormatter(logging.Formatter):
     def format(self, record):

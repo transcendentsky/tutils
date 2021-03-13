@@ -1,5 +1,5 @@
 dataset_pth : '../../dataset/Cephalometric/'
-runs_dir: '/data/quanquan/oneshot/runs/'
+runs_dir: './runs/'
 batch_size : 16
 num_workers : 8
 num_landmarks : 19

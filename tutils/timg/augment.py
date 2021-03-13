@@ -97,9 +97,9 @@ def compress_JPEG_from_path(path, quality=10):
     return buffer.contents()
 
 
-def gaussian_blur(img, kernel=(3, 3)):
+def gaussian_blur(img, kernel=(3, 3), std=0):
     # Gaussian Blur
-    return cv2.GaussianBlur(img, kernel)
+    return cv2.GaussianBlur(img, kernel, std)
 
 def add_gaussian_noise(img, mean=0, var=0.001):
     # Gaussian

@@ -74,6 +74,15 @@ def tfuncname(func):
         return ret
     return run
 
+def tshowtime(func):
+    def run(*argv, **kargs):
+        t1 = time.time()
+        ret = func(*argv, **kargs)
+        t2 = time.time()
+        # print(f"[Function {func.__name__}] Running time:{(t2-t1):.6f}s")
+        return (t2-t1), ret
+    return run
+
 def time_now():
     return time.strftime("%Y%m%d-%H%M%S", time.localtime())
 

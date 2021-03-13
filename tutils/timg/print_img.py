@@ -18,7 +18,9 @@ def torchvision_save(tensor:torch.Tensor, fname):
     """
     Recommended: 
     tensor: [b, 3, m,n], multiple images be saved in one file.
+    Tips: this function times 255 to tensor
     """
+    assert torch.max(tensor) <= 1.0 and torch.min(tensor) >= 0.0
     torchvision.utils.save_image(tensor, fname)
 
 def print_img_auto(img, img_type='ori', is_gt=True, fname=None):

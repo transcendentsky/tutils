@@ -8,6 +8,7 @@ from .tutils import tfilename
 
 class tenum:
     def __init__(self, iter):
+        self.stop_time = time.time()
         if type(iter) != enumerate:
             self.iter = enumerate(iter)
         else:
@@ -19,6 +20,8 @@ class tenum:
         start = time.time()
         i, res = self.iter.__next__()
         end = time.time()
+        iter_time = end - self.stop_time
+        self.stop_time = end
         return (end-start), i, res
       
 

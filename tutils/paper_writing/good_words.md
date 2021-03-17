@@ -22,9 +22,11 @@
 
 - `Nevertheless`
 
-- 
+- `dedicates one component to ` locally accurate but ambiguous 
 
 ## Idea/Method:
+- Our method automatically `reveals` physically meaningful relationships among landmarks, leading to a `task-agnostic` solution for exploiting structural knowledge `via` `step-wise` graph transformations.
+
 - To `relieve such a burden` for landmark detection task, we explore the `feasibility` of using ongly a single annotated image and ...
 
 - CC2D-SSL `captures` the `consistent anatomical information` in a `coarse-to-fine fashion` by comparing the cascade feature representations and ...
@@ -42,7 +44,7 @@
 
 - Our design is `further inspired` by our observation learned `through/via interactions with` **`clinicians`** that they firstly roughly locate the target regions through a `coarse screening` and then progressively refine the fine-grained location.
 
-- This step `brings two benefits`. `On one hand`, the inference procedure becomes more concise. Om the other hand, recent findings show that 
+- This step `brings two benefits`. `On one hand`, the inference procedure becomes more concise. On the other hand, recent findings show that 
 
 - 
 

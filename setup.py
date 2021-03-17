@@ -17,6 +17,8 @@ setup(
       'pandas',
       'pyyaml',
       'yamlloader',
+      'piq',
+      'SimpleITK',
       
   ],
 )

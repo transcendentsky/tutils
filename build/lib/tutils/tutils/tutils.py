@@ -139,7 +139,7 @@ def tfilename(*filenames):
         filename = os.path.join(*names)
     d(filename)
     parent, name = os.path.split(filename)
-    if not os.path.exists(parent):
+    if parent is not ''  and not os.path.exists(parent):
         d(parent)
         os.makedirs(parent)
     return filename

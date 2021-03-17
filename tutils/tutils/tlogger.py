@@ -64,14 +64,15 @@ def trans_init(args=None, mode=None):
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
     runs_dir = config['runs_dir'] + tag
-    runs_path = Path(runs_dir)
+    # runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
     config['tag'] = tag
-    if not runs_path.exists():
-        runs_path.makedirs()
+    if not os.path.exists(runs_dir):
+        print(f"Make dir '{runs_dir}' !")
+        os.makedirs(runs_dir)
     # Create Logger
     # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
-    logger = MultiLogger(log_dir=runs_dir, mode=mode)
+    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag)
     logger.info(config)
 
     return logger, config, tag, runs_dir
@@ -136,7 +137,7 @@ class MultiLogger(Logger):
         self.propagate = False
         self.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
+        handler.setFormatter(_MyFormatter(tag=flag, datefmt='%m%d %H:%M:%S'))
         self.addHandler(handler)
         set_logger_dir(self, log_dir, action, file_name)
 
@@ -167,8 +168,14 @@ class MultiLogger(Logger):
             self.info(f"[add_scalar] Step:{global_step}  {key}:{value}")
     
 class _MyFormatter(logging.Formatter):
-    def format(self, record):
+    def __init__(self, tag=None, *args, **kwargs):
+        self.tag = tag
+        super(_MyFormatter, self).__init__(*args, **kwargs)
+        
+    def format(self, record, tag=None):
+        tag = self.tag if tag == None else tag
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
+        data = data + colored(f' [{tag}] ', 'yellow') if tag is not None else data
         msg = '%(message)s'
         if record.levelno == logging.WARNING:
             fmt = date + ' ' + colored('WRN', 'yellow', attrs=['blink']) + ' ' + msg

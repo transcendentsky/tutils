@@ -8,3 +8,5 @@ opencv-python
 pandas
 pyyaml
 yamlloader
+piq
+SimpleITK

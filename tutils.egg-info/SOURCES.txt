@@ -25,7 +25,10 @@ tutils/timg/torchtools.py
 tutils/tloss/__init__.py
 tutils/tloss/entropy_loss.py
 tutils/tloss/infonce_loss.py
+tutils/tloss/ncc_loss.py
 tutils/tloss/pixel_level_contrastive_learning.py
+tutils/tloss/smooth_loss.py
+tutils/tloss/ssim_loss.py
 tutils/tradio/__init__.py
 tutils/tradio/demo.py
 tutils/tradio/example_helloFeatureClass.py

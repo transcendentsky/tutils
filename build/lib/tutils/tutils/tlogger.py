@@ -175,7 +175,7 @@ class _MyFormatter(logging.Formatter):
     def format(self, record, tag=None):
         tag = self.tag if tag == None else tag
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
-        data = data + colored(f' [{tag}] ', 'yellow') if tag is not None else data
+        date = date + colored(f' [{tag}] ', 'yellow') if tag is not None else date
         msg = '%(message)s'
         if record.levelno == logging.WARNING:
             fmt = date + ' ' + colored('WRN', 'yellow', attrs=['blink']) + ' ' + msg

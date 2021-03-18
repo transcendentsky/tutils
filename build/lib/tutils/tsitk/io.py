@@ -5,6 +5,7 @@ import sys
 import cv2
 
 # ----------------------
+# A useful package for loading radiological images
 from medpy.io import load
 
 def read2(*args, **kwargs):
@@ -19,7 +20,7 @@ type_dict = {"nifti": "NiftiImageIO",
              "png"  : "PNGImageIO"  ,
              }
 
-def read(path, mode:str="nifti"):
+def read(path:str, mode:str="nifti") -> sitk.SimpleITK.Image:
     mode = mode.lower()
     if mode in type_dict.keys():
         reader = sitk.ImageFileReader()
@@ -38,3 +39,19 @@ def read(path, mode:str="nifti"):
         return dicom_image
     else:
         raise NotImplementedError()
+    
+def write(img:sitk.SimpleITK.Image, path:str, mode:str="nifti"):
+    """
+    Path: (example) os.path.join(jpg_dir, f"trans_{random_name}.nii.gz")
+    """
+    mode = mode.lower()
+    writer = sitk.ImageFileWriter()
+    writer.SetFileName(path)
+    writer.Execute(img)
+
+def np_to_itk(img_np) -> np.ndarray:
+    return sitk.GetImageFromArray(img_np)
+
+def itk_to_np(img) -> sitk.SimpleITK.Image:
+    return sitk.GetArrayFromImage(img)
+

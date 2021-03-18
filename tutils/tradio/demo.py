@@ -1,3 +1,6 @@
+"""
+    This file is almost same like example_hellofeatures.py
+"""
 from __future__ import print_function
 
 import numpy

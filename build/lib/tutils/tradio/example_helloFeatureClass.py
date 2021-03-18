@@ -4,7 +4,7 @@ Copy from pyradiomics/examples/helloFeatureClass.py
 """
 from __future__ import print_function
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 import six
 
@@ -25,6 +25,14 @@ if imageName is None or maskName is None:  # Something went wrong, in this case 
 
 image = sitk.ReadImage(imageName)
 mask = sitk.ReadImage(maskName)
+img_np = sitk.GetArrayFromImage(image)
+mask_np = sitk.GetArrayFromImage(mask)
+
+image = sitk.GetImageFromArray(img_np[13,:,:][:,:,np.newaxis])
+mask  = sitk.GetImageFromArray(mask_np[13,:,:][:,:,np.newaxis])
+
+print("image", type(image))
+import ipdb; ipdb.set_trace()
 
 applyLog = False
 applyWavelet = False
@@ -69,7 +77,7 @@ print('done')
 print('Calculated first order features: ')
 for (key, val) in six.iteritems(results):
   print('  ', key, ':', val)
-
+import ipdb; ipdb.set_trace()
 #
 # Show Shape features
 #
@@ -150,7 +158,7 @@ for (key, val) in six.iteritems(results):
 # Show FirstOrder features, calculated on a LoG filtered image
 #
 if applyLog:
-  sigmaValues = numpy.arange(5., 0., -.5)[::1]
+  sigmaValues = np.arange(5., 0., -.5)[::1]
   for logImage, imageTypeName, inputKwargs in imageoperations.getLoGImage(image, mask, sigma=sigmaValues):
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()

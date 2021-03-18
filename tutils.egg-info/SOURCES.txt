@@ -31,6 +31,7 @@ tutils/tloss/smooth_loss.py
 tutils/tloss/ssim_loss.py
 tutils/tradio/__init__.py
 tutils/tradio/demo.py
+tutils/tradio/demo_function.py
 tutils/tradio/example_helloFeatureClass.py
 tutils/tsitk/__init__.py
 tutils/tsitk/io.py

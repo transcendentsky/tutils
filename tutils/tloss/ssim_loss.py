@@ -8,12 +8,13 @@ Implementation bellow seems not to be correct, according to this issue:
 https://github.com/Po-Hsun-Su/pytorch-ssim (X)
 """
 
-from piq import ssim, SSIMLoss
+from piq import ssim
+from piq import SSIMLoss as _SSIMLoss
 # For More Metrice, please refers to https://github.com/photosynthesis-team/piq
 
-def ssim_loss(data_range=1.):
+def SSIMLoss(data_range=1.):
     assert type(data_range) == float
-    return SSIMLoss(data_range)
+    return _SSIMLoss(data_range)
 
 
 def usage():
@@ -26,7 +27,7 @@ def usage():
     ssim_index: torch.Tensor = ssim(x, y, data_range=1.)
 
     # loss = SSIMLoss(data_range=1.)
-    loss = ssim_loss(data_range=1.)
+    loss = SSIMLoss(data_range=1.)
     output2 = loss(x,y)
     output: torch.Tensor = loss(x, x)
     print(output.item())

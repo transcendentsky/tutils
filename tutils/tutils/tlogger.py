@@ -63,6 +63,7 @@ def trans_init(args=None, mode=None):
             
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
+    extag = args.extag if extag is not '' else None
     runs_dir = config['runs_dir'] + tag
     # runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
@@ -72,7 +73,7 @@ def trans_init(args=None, mode=None):
         os.makedirs(runs_dir)
     # Create Logger
     # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
-    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag)
+    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag, extag=extag)
     logger.info(config)
 
     return logger, config, tag, runs_dir
@@ -80,6 +81,7 @@ def trans_init(args=None, mode=None):
 def trans_args():
     parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
     parser.add_argument("-t", "--tag", type=str, default="")
+    parser.add_argument("-et", "--extag", type=str, default="")
     parser.add_argument("-c", "--config", type=str, default='config.yaml') 
     args = parser.parse_args()
     return args   
@@ -108,7 +110,7 @@ def dump_yaml(logger, config):
 #     return logger
 
 class MultiLogger(Logger):
-    def __init__(self, log_dir, mode=None, flag="MyLogger", level=logging.INFO, action='k', file_name='log.log'):
+    def __init__(self, log_dir, mode=None, flag="MyLogger",extag=None, level=logging.INFO, action='k', file_name='log.log'):
         """
         mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
         """
@@ -137,7 +139,7 @@ class MultiLogger(Logger):
         self.propagate = False
         self.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setFormatter(_MyFormatter(tag=flag, datefmt='%m%d %H:%M:%S'))
+        handler.setFormatter(_MyFormatter(tag=flag, extag=extag, datefmt='%m%d %H:%M:%S'))
         self.addHandler(handler)
         set_logger_dir(self, log_dir, action, file_name)
 
@@ -168,14 +170,18 @@ class MultiLogger(Logger):
             self.info(f"[add_scalar] Step:{global_step}  {key}:{value}")
     
 class _MyFormatter(logging.Formatter):
-    def __init__(self, tag=None, *args, **kwargs):
+    def __init__(self, tag=None, extag=None, *args, **kwargs):
         self.tag = tag
+        self.extag = '-' + extag if (extag is not None and extag is not '') else ''
+        self.taginfo = colored(f' [{tag + extag}]', 'yellow') if tag is not None else ''
         super(_MyFormatter, self).__init__(*args, **kwargs)
         
-    def format(self, record, tag=None):
-        tag = self.tag if tag == None else tag
+    def format(self, record):
+        tag = self.tag
+        extag = self.extag
+        
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
-        date = date + colored(f' [{tag}] ', 'yellow') if tag is not None else date
+        date = date + self.taginfo
         msg = '%(message)s'
         if record.levelno == logging.WARNING:
             fmt = date + ' ' + colored('WRN', 'yellow', attrs=['blink']) + ' ' + msg

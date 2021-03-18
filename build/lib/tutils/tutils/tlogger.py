@@ -63,7 +63,7 @@ def trans_init(args=None, mode=None):
             
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
-    extag = args.extag if extag is not '' else None
+    extag = args.extag if args.extag is not '' else None
     runs_dir = config['runs_dir'] + tag
     # runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
@@ -172,7 +172,9 @@ class MultiLogger(Logger):
 class _MyFormatter(logging.Formatter):
     def __init__(self, tag=None, extag=None, *args, **kwargs):
         self.tag = tag
-        self.extag = '-' + extag if (extag is not None and extag is not '') else ''
+        self.extag = extag
+        extag = '-' + extag if (extag is not None and extag is not '') else ''
+        print(tag, extag)
         self.taginfo = colored(f' [{tag + extag}]', 'yellow') if tag is not None else ''
         super(_MyFormatter, self).__init__(*args, **kwargs)
         

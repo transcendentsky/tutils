@@ -36,6 +36,7 @@ class timer(object):
         self.verbose = verbose
         self.time_list = []
         self.start_time = time.time()
+        self.interval = None
         
     def __call__(self):
         self.start()
@@ -47,6 +48,7 @@ class timer(object):
         self.stop_time = time.time()
         self.interval = self.stop_time - self.start_time
         self.time_list.append(self.interval)
+        return self.interval
         
     def clear(self):
         self.time_list.clear()

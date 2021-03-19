@@ -86,7 +86,7 @@ def trans_args():
     args = parser.parse_args()
     return args   
 
-def dump_yaml(logger, config):
+def dump_yaml(logger, config, verbose=True):
     # Backup existing yaml file
     path = config['runs_dir'] + "/config.yaml"
     if os.path.isfile(path):
@@ -95,7 +95,8 @@ def dump_yaml(logger, config):
         logger.info(f"Existing yaml file '{path}' backuped to '{backup_name}' ")
     with open(path, "w") as f:
         yaml.dump(config, f)
-
+    if verbose:
+        logger.info(f"Saved config.yaml to {path}")
 # def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
 #     logger = logging.getLogger(flag)
 #     if multi:

@@ -16,6 +16,7 @@ tutils/timg/autoaugment.py
 tutils/timg/base_dataset.py
 tutils/timg/base_options.py
 tutils/timg/draw_heatmap.py
+tutils/timg/edge_detection.py
 tutils/timg/gaussian.py
 tutils/timg/multi_loader.py
 tutils/timg/print_img.py
@@ -23,6 +24,7 @@ tutils/timg/print_landmark.py
 tutils/timg/tools.py
 tutils/timg/torchtools.py
 tutils/tloss/__init__.py
+tutils/tloss/edege_loss.py
 tutils/tloss/entropy_loss.py
 tutils/tloss/infonce_loss.py
 tutils/tloss/ncc_loss.py
@@ -36,7 +38,7 @@ tutils/tradio/example_helloFeatureClass.py
 tutils/tsitk/__init__.py
 tutils/tsitk/io.py
 tutils/tutils/__init__.py
-tutils/tutils/timer.py
 tutils/tutils/tlogger.py
 tutils/tutils/tlogger_bk.py
+tutils/tutils/ttimer.py
 tutils/tutils/tutils.py

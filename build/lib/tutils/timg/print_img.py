@@ -22,6 +22,11 @@ def torchvision_save(tensor:torch.Tensor, fname):
     """
     assert torch.max(tensor) <= 1.0 and torch.min(tensor) >= 0.0
     torchvision.utils.save_image(tensor, fname)
+    
+def pil_save(img:Image.Image, fname):
+    if type(img) == np.ndarray:
+        img = Image.fromarray(img)
+    img.save(fname)
 
 def print_img_auto(img, img_type='ori', is_gt=True, fname=None):
     # print("[Warning] Pause to use print img, "); return

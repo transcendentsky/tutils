@@ -8,7 +8,7 @@ import six
 from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperations, shape
 from typing import List, Dict, NoReturn
 
-def calc_radio_fea(img:np.ndarray, mask:np.ndarray) -> np.ndarray:
+def calc_radio_fea(img:np.ndarray, mask:np.ndarray) -> List[np.ndarray]:
     assert type(img) == np.ndarray, f"TypeError, expected np.ndarray but Got {type(img)}"
     assert img.shape == mask.shape, f"SizeError, expected to be same, but Got {img.shape} and {mask.shape}"
     
@@ -69,7 +69,7 @@ def calc_radio_fea(img:np.ndarray, mask:np.ndarray) -> np.ndarray:
     return results_np
 
 
-def compare_radio_feas(fea1, fea2):
+def compare_radio_feas(fea1:list, fea2:list):
     e = 1e-8
     loss_list = list()
     var1_list = list()
@@ -90,14 +90,19 @@ def compare_radio_feas(fea1, fea2):
         var2_list.append(np.array(var2))
     return loss_list, var1_list, var2_list
 
+def compare_radio_feas_from_imgs(image1:np.ndarray, image2:np.ndarray, mask:np.ndarray) -> np.ndarray:
+    """
+    Compare the radiomics features bwteen two imgs
+    """
+    return compare_radio_feas_info(image1, image2, mask)
+
 def compare_radio_feas_info(image1:np.ndarray, image2:np.ndarray, mask:np.ndarray) -> np.ndarray:
-    
     fea1 = calc_radio_fea(image1, mask)
     fea2 = calc_radio_fea(image2, mask)
     loss_list, var1_list, var2_list = compare_radio_feas(fea1, fea2)
     results = []
-    for var1 in var1_list:
-        avg_var = np.mean(var1)
+    for var2 in var2_list:
+        avg_var = np.mean(var2)
         results.append(avg_var)
     return np.array(results)
 

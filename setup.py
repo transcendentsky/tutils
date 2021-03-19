@@ -19,7 +19,7 @@ setup(
       'yamlloader',
       'piq',
       'SimpleITK',
-      
+      'pyradiomics',
   ],
 )
 # py_modules=['tutils'],

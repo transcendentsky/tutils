@@ -10,3 +10,4 @@ pyyaml
 yamlloader
 piq
 SimpleITK
+pyradiomics

@@ -8,6 +8,6 @@ opencv-python
 pandas
 pyyaml
 yamlloader
-pytorch_ssim
+piq
 SimpleITK
-medpy
+pyradiomics

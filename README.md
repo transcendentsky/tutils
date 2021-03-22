@@ -1,1 +1,3 @@
-pip install git+git://github.com/transcendentsky/tutils.git
+
+pip install git+http://gitee.com/transcendentsky/tutils.git
+

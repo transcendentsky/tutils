@@ -17,9 +17,9 @@ setup(
       'pandas',
       'pyyaml',
       'yamlloader',
-        'pytorch_ssim',
-        'SimpleITK',
-      'medpy',
+      'piq',
+      'SimpleITK',
+      'pyradiomics',
   ],
 )
 # py_modules=['tutils'],

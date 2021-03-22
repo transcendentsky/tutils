@@ -41,3 +41,4 @@ class EdgeLoss(nn.Module):
     def forward(self, x, y):
         loss = self.loss(self.laplacian_kernel(x), self.laplacian_kernel(y))
         return loss
+

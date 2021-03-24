@@ -63,9 +63,8 @@ def trans_init(args=None, mode=None):
             
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
-    extag = args.extag if args.extag != '' else None
+    extag = None if (args == None) or (args.extag == '') else args.extag
     runs_dir = config['runs_dir'] + tag
-    # runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
     config['tag'] = tag
     if not os.path.exists(runs_dir):

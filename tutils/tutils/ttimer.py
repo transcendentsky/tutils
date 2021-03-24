@@ -36,10 +36,6 @@ class timer(object):
         self.verbose = verbose
         self.time_list = []
         self.start_time = time.time()
-<<<<<<< HEAD
-=======
-        self.interval = None
->>>>>>> 309444f1ed0ad4b55c096a89606692247bf423a0
         
     def __call__(self):
         self.start()
@@ -47,7 +43,6 @@ class timer(object):
     def start(self):
         self.start_time = time.time()
     
-<<<<<<< HEAD
     def stop(self, verbose=False):
         self.stop_time = time.time()
         interval = self.stop_time - self.start_time
@@ -55,13 +50,6 @@ class timer(object):
         if verbose:
             print(f"interval: {interval}")
         return interval
-=======
-    def stop(self):
-        self.stop_time = time.time()
-        self.interval = self.stop_time - self.start_time
-        self.time_list.append(self.interval)
-        return self.interval
->>>>>>> 309444f1ed0ad4b55c096a89606692247bf423a0
         
     def clear(self):
         self.time_list.clear()
@@ -107,10 +95,5 @@ if __name__ == "__main__":
     time.sleep(500)
     t1.stop()
     t2.stop()
-<<<<<<< HEAD
     print(t1.showavg())
     print(t2.showsum())
-=======
-    print(t1.show(t1.sum()))
-    print(t2.show(t2.sum()))
->>>>>>> 309444f1ed0ad4b55c096a89606692247bf423a0

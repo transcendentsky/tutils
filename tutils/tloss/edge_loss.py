@@ -39,6 +39,9 @@ class EdgeLoss(nn.Module):
         return diff
 
     def forward(self, x, y):
+        """
+        x: image
+        y: gt
+        """
         loss = self.loss(self.laplacian_kernel(x), self.laplacian_kernel(y))
         return loss
-

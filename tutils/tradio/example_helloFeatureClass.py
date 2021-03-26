@@ -75,8 +75,8 @@ results = firstOrderFeatures.execute()
 print('done')
 
 print('Calculated first order features: ')
-for (key, val) in six.iteritems(results):
-  print('  ', key, ':', val)
+for i, (key, val) in enumerate(six.iteritems(results)):
+  print('  ', f"{i}:", key, ':', val)
 import ipdb; ipdb.set_trace()
 #
 # Show Shape features
@@ -94,9 +94,8 @@ results = shapeFeatures.execute()
 print('done')
 
 print('Calculated Shape features: ')
-for (key, val) in six.iteritems(results):
-  print('  ', key, ':', val)
-
+for i, (key, val) in enumerate(six.iteritems(results)):
+  print('  ', f"{i}:", key, ':', val)
 #
 # Show GLCM features
 #
@@ -113,9 +112,8 @@ results = glcmFeatures.execute()
 print('done')
 
 print('Calculated GLCM features: ')
-for (key, val) in six.iteritems(results):
-  print('  ', key, ':', val)
-
+for i, (key, val) in enumerate(six.iteritems(results)):
+  print('  ', f"{i}:", key, ':', val)
 #
 # Show GLRLM features
 #
@@ -132,9 +130,8 @@ results = glrlmFeatures.execute()
 print('done')
 
 print('Calculated GLRLM features: ')
-for (key, val) in six.iteritems(results):
-  print('  ', key, ':', val)
-
+for i, (key, val) in enumerate(six.iteritems(results)):
+  print('  ', f"{i}:", key, ':', val)
 #
 # Show GLSZM features
 #
@@ -151,9 +148,8 @@ results = glszmFeatures.execute()
 print('done')
 
 print('Calculated GLSZM features: ')
-for (key, val) in six.iteritems(results):
-  print('  ', key, ':', val)
-  
+for i, (key, val) in enumerate(six.iteritems(results)):
+  print('  ', f"{i}:", key, ':', val)
 
 gldmFeatures = gldm.RadiomicsGLDM(image, mask, **settings)
 gldmFeatures.enableAllFeatures()
@@ -161,8 +157,8 @@ print('Calculating GLDM features...')
 results = gldmFeatures.execute()
 print('done')
 print('Calculated GLDM features: ')
-for (key, val) in six.iteritems(results):
-  print('  ', key, ':', val)
+for i, (key, val) in enumerate(six.iteritems(results)):
+  print('  ', f"{i}:", key, ':', val)
 #
 # Show FirstOrder features, calculated on a LoG filtered image
 #

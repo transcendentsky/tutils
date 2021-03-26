@@ -63,16 +63,21 @@ def d(*s, end="\n", **kargs):
 
 def tfuncname(func):
     def run(*argv, **kargs):
-        # p("--------------------------------------------")
-        d("[Trans Utils] Function Name: ", end=" ")
-        d(func.__name__)
+        p(f"[Trans Utils] Function Name: {func.__name__}")
         ret = func(*argv, **kargs)
-        # if argv:
-        #     ret = func(*argv)
-        # else:
-        #     ret = func()
         return ret
     return run
+
+def tfunctag(tag=None):
+    def _tfunc_decorator(func):
+        def run(*argv, **kargs):
+            # p("--------------------------------------------")
+            p(f"[Trans Utils] Function Name: {func.__name__}")
+            if tag is not None: p(f"[Trans Utils] Ps: {tag}")
+            ret = func(*argv, **kargs)
+            return ret
+        return run
+    return _tfunc_decorator
 
 def tshowtime(func):
     def run(*argv, **kargs):

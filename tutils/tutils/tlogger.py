@@ -45,7 +45,8 @@ ERROR = ERROR
 
 def trans_init(args=None, mode=None):
     """
-    logger, config, tag, runs_dir = trans_init(args)
+    logger, config, tag, runs_dir = trans_init(args, mode=None)
+    mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
     """
     # Load yaml config file
     if args == None: 
@@ -63,9 +64,8 @@ def trans_init(args=None, mode=None):
             
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
-    extag = args.extag if args.extag != '' else None
+    extag = None if (args == None) or (args.extag == '') else args.extag
     runs_dir = config['runs_dir'] + tag
-    # runs_path = Path(runs_dir)
     config['runs_dir'] = runs_dir
     config['tag'] = tag
     if not os.path.exists(runs_dir):
@@ -133,7 +133,7 @@ class MultiLogger(Logger):
             if log_dir is None:
                 self.logger.warning(f"Failed to turn on Tensorboard due to logdir=None")
             else:
-                writer = SummaryWriter(logdir=log_dir)
+                writer = SummaryWriter(logdir=os.path.join(log_dir, "tb"))
                 
         # --------- Standard init
         

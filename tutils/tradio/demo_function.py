@@ -5,7 +5,7 @@ import numpy as np
 import SimpleITK as sitk
 import six
 
-from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperations, shape
+from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperations, shape, gldm
 from typing import List, Dict, NoReturn
 
 def calc_radio_fea(img:np.ndarray, mask:np.ndarray) -> List[np.ndarray]:
@@ -37,7 +37,8 @@ def calc_radio_fea(img:np.ndarray, mask:np.ndarray) -> List[np.ndarray]:
     results_np = list()
     # Fisrt order
     firstOrderFeatures = firstorder.RadiomicsFirstOrder(image, mask, **settings)
-    firstOrderFeatures.enableFeatureByName('Mean', True)
+    # firstOrderFeatures.enableFeatureByName('Mean', True)
+    firstOrderFeatures.enableAllFeatures()
     results:dict = firstOrderFeatures.execute() # dict()
     # results_collect['FirstOrder'] = results
     results_np.append(np.array([value for key, value in results.items()]))
@@ -64,6 +65,11 @@ def calc_radio_fea(img:np.ndarray, mask:np.ndarray) -> List[np.ndarray]:
     glszmFeatures.enableAllFeatures()
     results = glszmFeatures.execute()
     # results_collect['GLSZM'] = results
+    results_np.append(np.array([value for key, value in results.items()]))
+    
+    gldmFeatures = gldm.RadiomicsGLDM(image, mask, **settings)
+    gldmFeatures.enableAllFeatures()
+    results = gldmFeatures.execute()
     results_np.append(np.array([value for key, value in results.items()]))
     
     return results_np

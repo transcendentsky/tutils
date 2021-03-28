@@ -133,6 +133,7 @@ class MultiLogger(Logger):
             if log_dir is None:
                 self.logger.warning(f"Failed to turn on Tensorboard due to logdir=None")
             else:
+                self.logger.info(f"Use Tensorboard, log at '{os.path.join(log_dir, 'tb')}'")
                 writer = SummaryWriter(logdir=os.path.join(log_dir, "tb"))
                 
         # --------- Standard init

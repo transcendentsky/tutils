@@ -17,13 +17,14 @@ def canny(img:np.ndarray,
 def usage():
     # Demo / example
     from PIL import Image
-    img = Image.open("/home1/quanquan/datasets/film-gen/source/hypophysis-mri-film2/T1-Cyr17H.jpg").convert('RGB')
+    img = Image.open("/home/quanquan/code/tutils/tutils/tloss/Raw.png").convert('RGB')
     print(type(img))
     img_np = np.array(img)
     print(img_np.shape)
     mask = canny(img_np)
     mask = Image.fromarray(mask)
-    mask.save("T1-Cyr17H-mask.jpg")
+    mask.save("Raw_edge.png")
+    print("Save over")
     
 if __name__ == "__main__":
     usage()

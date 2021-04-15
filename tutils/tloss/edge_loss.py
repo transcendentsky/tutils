@@ -45,3 +45,23 @@ class EdgeLoss(nn.Module):
         """
         loss = self.loss(self.laplacian_kernel(x), self.laplacian_kernel(y))
         return loss
+
+def display():
+    from PIL import Image
+    from tutils.timg.print_img import torchvision_save
+    from torchvision import transforms
+    import torchvision
+    img_pth = "./Raw.png"
+    img = Image.open(img_pth).convert('RGB')
+    img = transforms.ToTensor()(img).unsqueeze(0).cuda()
+    img = transforms.Normalize([0], [1])(img)
+    print(img.shape)
+    edgelossfn = EdgeLoss()
+    laplacian = edgelossfn.laplacian_kernel(img)
+    print("Save img!!")
+    # torchvision_save(laplacian, "./edgeloss_edge.jpg")
+    torchvision.utils.save_image(laplacian, "./edgeloss_edge.jpg")
+
+
+if __name__ == "__main__":
+    display()

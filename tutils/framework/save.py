@@ -5,7 +5,7 @@ class Tester(object):
         self.loss_total = 0
         self.loss_list = []
         self.logger = logger
-        self.config = config`
+        self.config = config
 
     def reset(self):
         self.loss_list.clear()
@@ -18,5 +18,5 @@ class Tester(object):
         pass
 
 def save_model(logger, config):
-    state = model.state_dict()
-    torch.save(state, tfilename(config['runs_dir'], "model", "best_{}.pkl".format(epoch)))
+    # state = model.state_dict()
+    torch.save(model.state_dict(), tfilename(config['runs_dir'], "model", "best_{}.pkl".format(epoch)))

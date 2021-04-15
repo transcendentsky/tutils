@@ -7,9 +7,9 @@ setup(
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(),
     install_requires=[
-      'einops',
+      # 'einops',
       'torch>=1.6',
-      'kornia>=0.4.0',
+      #'kornia>=0.4.0',
       'torchvision',
       'seaborn',
       'matplotlib',
@@ -17,9 +17,9 @@ setup(
       'pandas',
       'pyyaml',
       'yamlloader',
-      'piq',
+      # 'piq',
       'SimpleITK',
-      'pyradiomics',
+      #'pyradiomics',
   ],
 )
 # py_modules=['tutils'],

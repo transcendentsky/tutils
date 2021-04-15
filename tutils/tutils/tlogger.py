@@ -1,13 +1,3 @@
-# import yaml
-# import numpy as np
-#
-# class TParams(object):
-#     def __init__(self):
-#         # common hyper-params
-#         self.batch_size = 16
-#         self.learning_rate = 1
-#
-
 # -*- coding: utf-8 -*-
 # File: logger.py
 
@@ -50,7 +40,16 @@ def trans_init(args=None, mode=None):
     """
     # Load yaml config file
     if args == None: 
-        config=dict({'runs_dir':'./runs/'})
+        config=dict({'runs_dir':'./runs/',
+                     'dataset_pth' : '../../dataset/Cephalometric/',
+                     'batch_size' : 16,
+                     'num_workers' : 8,
+                     'learning_rate' : 0.0003,
+                     'decay_step' : 150,
+                     'decay_gamma' : 0.1,
+                     'num_epochs' : 500})
+        with open('./config.yaml', "w") as f:
+            yaml.dump(config, f)
     else:
         try:
             with open(args.config) as f:
@@ -75,11 +74,13 @@ def trans_init(args=None, mode=None):
     # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
     logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag, extag=extag)
     logger.info(config)
+    config['logger'] = logger
 
-    return logger, config, tag, runs_dir
+    return logger, config
 
-def trans_args():
-    parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
+def trans_args(parser=None):
+    if parser is None:
+        parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
     parser.add_argument("-t", "--tag", type=str, default="")
     parser.add_argument("-et", "--extag", type=str, default="")
     parser.add_argument("-c", "--config", type=str, default='config.yaml') 

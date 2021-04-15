@@ -20,7 +20,7 @@ def torchvision_save(tensor:torch.Tensor, fname):
     tensor: [b, 3, m,n], multiple images be saved in one file.
     Tips: this function times 255 to tensor
     """
-    assert torch.max(tensor) <= 1.0 and torch.min(tensor) >= 0.0
+    assert torch.max(tensor) <= 1.0 and torch.min(tensor) >= 0.0, f"Error, got Max:{torch.max(tensor)}, and Min:{torch.min(tensor)}"
     torchvision.utils.save_image(tensor, fname)
     
 def pil_save(img:Image.Image, fname):

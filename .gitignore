@@ -1,4 +1,4 @@
-__pycache__/*
+*__pycache__/*
 .ipynb_checkpoints/*
 .mypy_cache/*
 .vscode/*
@@ -8,3 +8,5 @@ dist/*
 *.jpg
 *.pth
 *.pkl
+*.png
+*.jpg

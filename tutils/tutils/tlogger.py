@@ -74,7 +74,7 @@ def trans_init(args=None, mode=None):
     # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
     logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag, extag=extag)
     logger.info(config)
-    config['logger'] = logger
+    config['logger'] = logger.mode
 
     return logger, config
 
@@ -121,6 +121,7 @@ class MultiLogger(Logger):
         self.tb = None
         self.step = -1
         self.log_dir = log_dir
+        self.mode = mode
         
         if mode == None: mode = []
         if type(mode) is str: mode = [mode]

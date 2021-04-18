@@ -6,6 +6,7 @@ import os
 import cv2
 import random
 import torchvision
+from torchvision import transforms
 # RandAugment from https://github.com/DeepVoltaire/AutoAugment
 from .autoaugment import ImageNetPolicy
 # RandAugment from https://github.com/xiaopingzeng/pytorch-randaugment

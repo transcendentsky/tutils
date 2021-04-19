@@ -100,7 +100,7 @@ def tshowtime(func):
         ret = func(*argv, **kargs)
         t2 = time.time()
         print(f"[Function {func.__name__}] Running time:{(t2-t1):.6f}s")
-        return (t2-t1), ret
+        return ret
     return run
 
 # print(isinstance(g, Iterable)) # true

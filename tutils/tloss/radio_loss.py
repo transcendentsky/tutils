@@ -20,6 +20,9 @@ class GLCMLoss(nn.Module):
         return torch.stack([x1,x2], axis=1)
 
     def forward(self, x, y):
+        """
+            shape: b, m, n
+        """
         assert len(x.size()) == 3
         x_m = self.pair_matrix(x)
         y_m = self.pair_matrix(y)

@@ -16,6 +16,10 @@ class CharbonnierLoss(nn.Module):
         return loss
 
 class EdgeLoss(nn.Module):
+    """
+        Used for RGB image
+            if applied to GreyLevel Image, please set kernel repeat off
+    """
     def __init__(self):
         super(EdgeLoss, self).__init__()
         k = torch.Tensor([[.05, .25, .4, .25, .05]])

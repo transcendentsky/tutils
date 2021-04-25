@@ -33,10 +33,20 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
-def trans_init(args=None, mode=None):
+def trans_init(args=None, mode=None, action='k'):
     """
     logger, config, tag, runs_dir = trans_init(args, mode=None)
     mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
+    
+    action: "d": delete the directory. Note that the deletion may fail when
+                the directory is used by tensorboard.
+                "k": keep the directory. This is useful when you resume from a
+                previous training and want the directory to look as if the
+                training was not interrupted.
+                Note that this option does not load old models or any other
+                old states for you. It simply does nothing.
+                "b" : copy the old dir
+                "n" : New an new dir by time
     """
     # Load yaml config file
     if args == None: 
@@ -63,7 +73,7 @@ def trans_init(args=None, mode=None):
             
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
-    extag = None if (args == None) or (args.extag == '') else args.extag
+    extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag
     runs_dir = config['runs_dir'] + tag
     config['runs_dir'] = runs_dir
     config['tag'] = tag
@@ -72,10 +82,13 @@ def trans_init(args=None, mode=None):
         os.makedirs(runs_dir)
     # Create Logger
     # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
-    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag, extag=extag)
+    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag, extag=extag, action=action) # backup config.yaml
     logger.info(config)
     config['logger'] = logger.mode
-
+    config['Argv'] = "Argv: " + ' '.join(sys.argv)
+    logger.info(config['Argv'])
+    if args is not None:
+        config = {**vars(args), **config}
     return logger, config
 
 def trans_args(parser=None):
@@ -98,6 +111,7 @@ def dump_yaml(logger, config, verbose=True):
         yaml.dump(config, f)
     if verbose:
         logger.info(f"Saved config.yaml to {path}")
+
 # def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
 #     logger = logging.getLogger(flag)
 #     if multi:
@@ -133,9 +147,9 @@ class MultiLogger(Logger):
         if "tb" in mode or "tensorboard" in mode:
             from tensorboardX import SummaryWriter
             if log_dir is None:
-                self.logger.warning(f"Failed to turn on Tensorboard due to logdir=None")
+                self.warning(f"Failed to turn on Tensorboard due to logdir=None")
             else:
-                self.logger.info(f"Use Tensorboard, log at '{os.path.join(log_dir, 'tb')}'")
+                self.info(f"Use Tensorboard, log at '{os.path.join(log_dir, 'tb')}'")
                 writer = SummaryWriter(logdir=os.path.join(log_dir, "tb"))
                 
         # --------- Standard init

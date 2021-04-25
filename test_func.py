@@ -71,6 +71,26 @@ def test4():
     print(data[0], data[1])
     import ipdb;ipdb.set_trace()
 
+def test5():
+    import argparse
+    parser = argparse.ArgumentParser(description="Train Unet landmark detection network")
+    parser.add_argument("--tag", default='', help="name of the run")
+    parser.add_argument("--config", default="cconf.yaml", help="default configs")
+    parser.add_argument("--test", type=int, default=0, help="Test Mode")
+    parser.add_argument("--resume", type=int , default=0)
+    parser.add_argument("--pretrain", type=str, default="1") #emb-16-289
+    parser.add_argument("--pepoch", type=int, default=0)
+    parser.add_argument("--edge", type=int, default=1)
+    args = parser.parse_args()
+
+    config = {"tag":"hohoho", "test":1, "dasdas":"dasdas"}
+    print(args)
+    # print(dict(args))
+    print(vars(args))
+    # for key, value in vars(args).items():
+    #     config[]
+    config = {**vars(args), **config}
+    print(config)
 
 if __name__ == "__main__":
-    test4()
+    test5()

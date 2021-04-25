@@ -23,8 +23,9 @@ def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
     plt.close()
 
 
-def draw_scatter(points, points2, fname="ttest.png", c="red"):
-    plt.rc('font', family='Times New Roman')
+def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None):
+    if set_font is not None:
+        plt.rc('font', family='Times New Roman')
     fig = plt.figure()
     points = points.flatten()
     points2 = points2.flatten()

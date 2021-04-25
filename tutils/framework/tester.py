@@ -28,9 +28,47 @@ class Recoder(object):
         
     def cal_metrics(self):
         temp = np.array(self.loss_list)
-        mean = temp.mean()
-        self.logger.info(f"cal_metrics: {mean}")
+        mean = temp.mean(axis=0)
+        # self.logger.info(f"cal_metrics: {mean}")
         return mean
+
+class EpochRecorder(object):
+    def __init__(self, logger, config, mode="dec"):
+        # mode in ["dec", "inc"]
+        self.logger = logger
+        self.config = config
+        self.best_epoch = None
+        self.best_value = None
+        self.epoch_list = []
+        self.value_list = []
+        self.mode = mode
+        if mode == "dec":
+            self.comp = self._less
+        else:
+            self.comp = self._greater
+
+    def _less(self, a, b):
+        if a < b: return True
+        else: return False
+
+    def _greater(self, a, b):
+        if a > b: return True
+        else: return False
+
+
+    def record_and_return(self, epoch, value):
+        if self.best_epoch is None:
+            self.best_epoch = epoch
+            self.best_value = value
+        # self.best_epoch.append(epoch)
+        # self.best_value.append(value)
+        if self.comp(value, self.best_epoch):
+            self.best_epoch = epoch
+            self.best_value = value
+            return True
+        else:
+            return False
+
 
 class Tester(object):
     def __init__(self, args, config, logger):

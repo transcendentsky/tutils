@@ -50,7 +50,7 @@ def trans_init(args=None, mode=None, action='k'):
     """
     # Load yaml config file
     if args == None: 
-        config=dict({'runs_dir':'./runs/',
+        config=dict({'runs_dir':'../runs/',
                      'dataset_pth' : '../../dataset/Cephalometric/',
                      'batch_size' : 16,
                      'num_workers' : 8,
@@ -96,7 +96,7 @@ def trans_args(parser=None):
         parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
     parser.add_argument("-t", "--tag", type=str, default="")
     parser.add_argument("-et", "--extag", type=str, default="")
-    parser.add_argument("-c", "--config", type=str, default='config.yaml') 
+    parser.add_argument("-c", "--config", type=str, default='./config.yaml') 
     args = parser.parse_args()
     return args   
 

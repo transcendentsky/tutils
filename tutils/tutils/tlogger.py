@@ -33,7 +33,7 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
-def trans_init(args=None, mode=None, action='k'):
+def trans_init(args=None, config=None, mode=None, action='k'):
     """
     logger, config, tag, runs_dir = trans_init(args, mode=None)
     mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
@@ -49,28 +49,14 @@ def trans_init(args=None, mode=None, action='k'):
                 "n" : New an new dir by time
     """
     # Load yaml config file
-    if args == None: 
-        config=dict({'runs_dir':'../runs/',
-                     'dataset_pth' : '../../dataset/Cephalometric/',
-                     'batch_size' : 16,
-                     'num_workers' : 8,
-                     'learning_rate' : 0.0003,
-                     'decay_step' : 150,
-                     'decay_gamma' : 0.1,
-                     'num_epochs' : 500})
-        with open('./config.yaml', "w") as f:
-            yaml.dump(config, f)
+    if config is not None:
+        config = config
+    elif args is not None: 
+        with open(args.config) as f:
+            config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     else:
-        try:
-            with open(args.config) as f:
-                config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
-        except AttributeError as e:
-            print(sys.exc_info())
-            config = dict({'runs_dir':'./runs/'})
-        except Exception as e:
-            print(sys.exc_info())
-            config = dict({'runs_dir':'./runs/'})
-            
+        config=dict({'runs_dir':'../runs/',})
+        
     # Create runs dir
     tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
     extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag

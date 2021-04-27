@@ -1,0 +1,9 @@
+test:
+  epoch: 200
+  tag: Test2
+train:
+  decay: 0.002
+  epoch: 500
+  lr: 0.0001
+  moment: 0.5
+  tag: Train1

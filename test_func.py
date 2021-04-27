@@ -92,5 +92,17 @@ def test5():
     config = {**vars(args), **config}
     print(config)
 
+def test6():
+    import yaml
+    import yamlloader
+    """ Test yamlloader """
+    
+    with open("conf.yaml") as f:
+        config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+    print(config)
+    with open("conf_dump.yaml", "w") as f:
+        yaml.dump(config, f)
+
+
 if __name__ == "__main__":
-    test5()
+    test6()

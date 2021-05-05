@@ -51,15 +51,18 @@ def trans_init(args=None, config=None, mode=None, action='k'):
     # Load yaml config file
     if config is not None:
         config = config
-    elif args is not None: 
-        with open(args.config) as f:
-            config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+        tag = config['tag']
+        extag = config['extag'] if 'extag' in config.keys() else None
     else:
-        config=dict({'runs_dir':'../runs/',})
-        
-    # Create runs dir
-    tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
-    extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag
+        if args is not None: 
+            with open(args.config) as f:
+                config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+        else:
+            config=dict({'runs_dir':'../runs/',})
+        # Create runs dir
+        tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
+        extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag
+
     runs_dir = config['runs_dir'] + tag
     config['runs_dir'] = runs_dir
     config['tag'] = tag

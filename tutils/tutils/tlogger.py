@@ -51,6 +51,7 @@ def trans_init(args=None, config=None, mode=None, action='k'):
     # Load yaml config file
     if config is not None:
         config = config
+        config = {**vars(args), **config}
         tag = config['tag'] if 'tag' in config.keys() else str(datetime.now()).replace(' ', '-')
         extag = config['extag'] if 'extag' in config.keys() else None
     else:
@@ -60,6 +61,7 @@ def trans_init(args=None, config=None, mode=None, action='k'):
         else:
             config=dict({'runs_dir':'../runs/',})
         # Create runs dir
+        config = {**vars(args), **config}
         tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
         extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag
 

@@ -209,7 +209,7 @@ def tsne(X, no_dims=2, initial_dims=50, perplexity=30.0):
         # Compute current value of cost function
         if (iter + 1) % 10 == 0:
             C = torch.sum(P * torch.log(P / Q))
-            print("Iteration %d: error is %f" % (iter + 1, C))
+            print("Iteration %d: loss is %f" % (iter + 1, C))
 
         # Stop lying about P-values
         if iter == 100:

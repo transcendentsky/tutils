@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 from tqdm import tqdm
-import matplotlib
 
-matplotlib.use('agg')
+import matplotlib
+matplotlib.use('Agg')  # Must be before importing matplotlib.pyplot or pylab!
+import matplotlib.pyplot as plt
+# matplotlib.use('agg')
 
 
 def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
@@ -23,15 +25,29 @@ def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
     plt.close()
 
 
-def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None):
+# def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None):
+#     if set_font is not None:
+#         plt.rc('font', family='Times New Roman')
+#     fig = plt.figure()
+#     points = points.flatten()
+#     points2 = points2.flatten()
+#     plt.scatter(points, points2, c=c, label="???")
+#     plt.xlabel("cos")
+#     plt.ylabel("euc")
+#     plt.savefig(fname)
+#     plt.close()
+
+
+def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None, xlabel="x", ylabel="y"):
+    plt.ioff()  # Turn off interactive plotting off
     if set_font is not None:
         plt.rc('font', family='Times New Roman')
     fig = plt.figure()
     points = points.flatten()
     points2 = points2.flatten()
     plt.scatter(points, points2, c=c, label="???")
-    plt.xlabel("cos")
-    plt.ylabel("euc")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.savefig(fname)
     plt.close()
 

@@ -33,6 +33,17 @@ WARNING = WARNING
 CRITICAL = CRITICAL
 ERROR = ERROR
 
+
+def trans_args(parser=None):
+    if parser is None:
+        parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
+    parser.add_argument("-t", "--tag", type=str, default="")
+    parser.add_argument("-et", "--extag", type=str, default="")
+    parser.add_argument("-c", "--config", type=str, default='./config.yaml') 
+    args = parser.parse_args()
+    return args   
+
+
 def trans_init(args=None, config=None, mode=None, action='k'):
     """
     logger, config, tag, runs_dir = trans_init(args, mode=None)
@@ -83,14 +94,6 @@ def trans_init(args=None, config=None, mode=None, action='k'):
         config = {**vars(args), **config}
     return logger, config
 
-def trans_args(parser=None):
-    if parser is None:
-        parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
-    parser.add_argument("-t", "--tag", type=str, default="")
-    parser.add_argument("-et", "--extag", type=str, default="")
-    parser.add_argument("-c", "--config", type=str, default='./config.yaml') 
-    args = parser.parse_args()
-    return args   
 
 def dump_yaml(logger, config, verbose=True):
     # Backup existing yaml file

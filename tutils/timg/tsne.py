@@ -5,11 +5,14 @@ Github: https://github.com/mxl1990/tsne-pytorch
 author: mxl1990
 
 
-A great Version from 
+A great Version from (BUT hard to install ...)
 https://github.com/CannyLab/tsne-cuda
 TSNE-CUDA
 conda install cuda<major><minor> tsnecuda -c cannylab
     conda install cuda11.0 tsnecuda -c cannylab
+Run:
+from tsnecuda import TSNE
+X_embedded = TSNE(n_components=2, perplexity=15, learning_rate=10).fit_transform(X)
 
 
 parameters	        描述
@@ -45,22 +48,6 @@ import numpy as np
 import matplotlib.pyplot as pyplot
 import argparse
 import torch
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--xfile", type=str, default="mnist2500_X.txt", help="file name of feature stored")
-parser.add_argument("--yfile", type=str, default="mnist2500_labels.txt", help="file name of label stored")
-parser.add_argument("--cuda", type=int, default=1, help="if use cuda accelarate")
-
-opt = parser.parse_args()
-print("get choice from args", opt)
-xfile = opt.xfile
-yfile = opt.yfile
-
-if opt.cuda:
-    print("set use cuda")
-    torch.set_default_tensor_type(torch.cuda.DoubleTensor)
-else:
-    torch.set_default_tensor_type(torch.DoubleTensor)
 
 
 def Hbeta_torch(D, beta=1.0):
@@ -232,7 +219,24 @@ def tsne(X, no_dims=2, initial_dims=50, perplexity=30.0):
     return Y
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--xfile", type=str, default="mnist2500_X.txt", help="file name of feature stored")
+    parser.add_argument("--yfile", type=str, default="mnist2500_labels.txt", help="file name of label stored")
+    parser.add_argument("--cuda", type=int, default=1, help="if use cuda accelarate")
+
+    opt = parser.parse_args()
+    print("get choice from args", opt)
+    xfile = opt.xfile
+    yfile = opt.yfile
+
+    if opt.cuda:
+        print("set use cuda")
+        torch.set_default_tensor_type(torch.cuda.DoubleTensor)
+    else:
+        torch.set_default_tensor_type(torch.DoubleTensor)
+
+
     print("Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset.")
 
     X = np.loadtxt(xfile)

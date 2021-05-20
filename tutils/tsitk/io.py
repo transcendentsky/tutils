@@ -9,7 +9,8 @@ import cv2
 from medpy.io import load
 
 def read2(*args, **kwargs):
-    load(*args, **kwargs)
+    image_data, image_header = load(*args, **kwargs)
+    return image_data, image_header
 
 
 type_dict = {"nifti": "NiftiImageIO",

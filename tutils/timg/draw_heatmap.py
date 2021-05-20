@@ -15,6 +15,8 @@ def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
     # points = np.reshape(points, (count1, count2))
     plt.rc('font', family='Times New Roman')
     fig = plt.figure(figsize=(25, 20))
+    parent, tail = os.path.split(fname)
+    fig.suptitle(tail)
     ax1 = fig.add_subplot(221)
     sns_plot = sns.heatmap(points)
     # fig, ax = plt.subplots()
@@ -43,6 +45,8 @@ def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None, xla
     if set_font is not None:
         plt.rc('font', family='Times New Roman')
     fig = plt.figure()
+    parent, tail = os.path.split(fname)
+    fig.suptitle(tail)
     points = points.flatten()
     points2 = points2.flatten()
     plt.scatter(points, points2, c=c, label="???")

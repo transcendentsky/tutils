@@ -39,7 +39,7 @@ def trans_args(parser=None):
         parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
     parser.add_argument("-t", "--tag", type=str, default="")
     parser.add_argument("-et", "--extag", type=str, default="")
-    parser.add_argument("-c", "--config", type=str, default='./config.yaml') 
+    parser.add_argument("-c", "--config", type=str, default='./configs/config.yaml') 
     args = parser.parse_args()
     return args   
 

@@ -70,14 +70,14 @@ def trans_init(args=None, config=None, mode=None, action='k'):
             with open(args.config) as f:
                 config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
         else:
-            config=dict({'runs_dir':'../runs/',})
+            config=dict({'base_dir':'../runs/',})
         # Create runs dir
         config = {**vars(args), **config}
         tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
         extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag
 
     config['runtime'] = str(datetime.now()).replace(' ', '-')
-    runs_dir = os.path.join(config['runs_dir'], tag)
+    runs_dir = os.path.join(config['base_dir'], tag)
     config['runs_dir'] = runs_dir
     config['tag'] = tag
     if not os.path.exists(runs_dir):
@@ -95,9 +95,9 @@ def trans_init(args=None, config=None, mode=None, action='k'):
     return logger, config
 
 
-def dump_yaml(logger, config, verbose=True):
+def dump_yaml(logger, config, path=None, verbose=True):
     # Backup existing yaml file
-    path = config['runs_dir'] + "/config.yaml"
+    path = config['runs_dir'] + "/config.yaml" if path is None else path
     if os.path.isfile(path):
         backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)

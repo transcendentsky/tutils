@@ -1,9 +1,35 @@
-train:
-  lr: 0.0001
-  decay: 0.002
-  moment: 0.5
-  tag: "Train1"
-  epoch: 500
-test:
-  epoch: 200
-  tag: "Test2"
+base_dir: '../runs-3d/'
+tag: 'notag'
+
+dataset:
+  pth: '/home1/quanquan/datasets/Head-and-Neck-challenge/preprocessed/'
+  clip: [-200.0, 400.0]
+training:
+  batch_size : 8
+  num_workers : 8
+  num_epochs : 12800
+  save_seq : 10
+  crop_size: [128, 128, 64]
+  patch_size: [64, 64, 32]
+optim:
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  decay_step: 50
+  decay_gamma: 0.8
+
+# Task-specific params
+special:
+  num_landmarks : 6
+  emb_len: 32
+  nearby : 24
+  alpha: 0.99
+#  lambda : 2
+#  non_local: True
+#  conf: False
+
+# Testing
+testing:
+  epoch: 1
+  batch_size: 1
+  label_name: 'Mandible'
+  LABEL_CONFIG: {'labels': {'BrainStem', 'Mandible', 'Parotid_L', 'Parotid_R'}}

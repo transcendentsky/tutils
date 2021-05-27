@@ -24,7 +24,11 @@
 
 - `dedicates one component to ` locally accurate but ambiguous 
 
+- eliminate ambiguities but are less accurate 
+
 ## Idea/Method:
+- Our model, named as XXUnet, is inspired by the universal design of Huang, and the local-global design of Payer, reaping the benefits of both worlds.
+
 - Our method automatically `reveals` physically meaningful relationships among landmarks, leading to a `task-agnostic` solution for exploiting structural knowledge `via` `step-wise` graph transformations.
 
 - To `relieve such a burden` for landmark detection task, we explore the `feasibility` of using ongly a single annotated image and ...

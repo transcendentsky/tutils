@@ -24,6 +24,7 @@ import yamlloader
 from pathlib import Path
 import argparse
 import sys
+from collections import OrderedDict
 # import traceback
 # from typing import List, Dict
 
@@ -92,8 +93,13 @@ def trans_init(args=None, config=None, mode=None, action='k'):
     logger.info(config['Argv'])
     if args is not None:
         config = {**vars(args), **config}
+    dump_yaml(logger, config)
     return logger, config
 
+def load_yaml(path):
+    with open(path) as f:
+        config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+    return config
 
 def dump_yaml(logger, config, path=None, verbose=True):
     # Backup existing yaml file
@@ -103,6 +109,9 @@ def dump_yaml(logger, config, path=None, verbose=True):
         shutil.move(path, backup_name)
         logger.info(f"Existing yaml file '{path}' backuped to '{backup_name}' ")
     with open(path, "w") as f:
+        for key, value in config.items():
+            if type(value) == OrderedDict:
+                config[key] = dict(value)
         yaml.dump(config, f)
     if verbose:
         logger.info(f"Saved config.yaml to {path}")

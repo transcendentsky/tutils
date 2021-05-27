@@ -9,7 +9,9 @@ new_dict:
   bb: 2
 new_dict2:
   test: test
-  test2: test2
+  test2:
+    aa: 1
+    bad: 2
 optim:
   decay_gamma: 0.8
   decay_step: 50

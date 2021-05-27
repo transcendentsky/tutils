@@ -101,6 +101,19 @@ def load_yaml(path):
         config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     return config
 
+def ordereddict_to_dict(d):
+    if type(d) not in [OrderedDict, dict]:
+        return d
+    for k, v in d.items():
+        if type(v) == OrderedDict:
+            v = ordereddict_to_dict(v)
+            d[k] = dict(v)
+        elif type(v) == list:
+            d[k] = ordereddict_to_dict(v)
+        elif type(v) == dict:
+            d[k] = ordereddict_to_dict(v)
+    return d
+
 def dump_yaml(logger, config, path=None, verbose=True):
     # Backup existing yaml file
     path = config['runs_dir'] + "/config.yaml" if path is None else path
@@ -109,9 +122,7 @@ def dump_yaml(logger, config, path=None, verbose=True):
         shutil.move(path, backup_name)
         logger.info(f"Existing yaml file '{path}' backuped to '{backup_name}' ")
     with open(path, "w") as f:
-        for key, value in config.items():
-            if type(value) == OrderedDict:
-                config[key] = dict(value)
+        config = ordereddict_to_dict(config)
         yaml.dump(config, f)
     if verbose:
         logger.info(f"Saved config.yaml to {path}")

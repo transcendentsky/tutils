@@ -1,5 +1,10 @@
 # coding: utf-8
 """
+    This scripts is some other implementations of TSNE
+    Using tsne.py (matplotlib) is OK and more simple
+"""
+
+"""
 T-SNE : pytorch version 
 Github: https://github.com/mxl1990/tsne-pytorch
 author: mxl1990

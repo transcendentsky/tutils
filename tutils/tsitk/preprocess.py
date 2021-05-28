@@ -46,3 +46,6 @@ def resampleImage(Image:sitk.SimpleITK.Image, SpacingScale=None, NewSpacing=None
     NewImage = Resample.Execute(Image)
 
     return NewImage    
+
+def usage():
+    image = resampleImage(image, NewSpacing=new_spacing)

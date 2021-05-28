@@ -38,14 +38,24 @@ ERROR = ERROR
 def trans_args(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
-    parser.add_argument("-t", "--tag", type=str, default="")
-    parser.add_argument("-et", "--extag", type=str, default="")
-    parser.add_argument("-c", "--config", type=str, default='./configs/config.yaml') 
+    try:
+        parser.add_argument("-t", "--tag", type=str, default="")
+    except:
+        print("Already add '--tag' ")
+    try:
+        parser.add_argument("-et", "--extag", type=str, default="")
+    except:
+        print("Already add '--extag' ")
+    try:
+        parser.add_argument("-c", "--config", type=str, default='./configs/config.yaml') 
+    except:
+        print("Already add '--config' ")
+    
     args = parser.parse_args()
     return args   
 
 
-def trans_init(args=None, config=None, mode=None, action='k'):
+def trans_init(args=None, ex_config=None, mode=None, action='k'):
     """
     logger, config, tag, runs_dir = trans_init(args, mode=None)
     mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
@@ -61,26 +71,24 @@ def trans_init(args=None, config=None, mode=None, action='k'):
                 "n" : New an new dir by time
     """
     # Load yaml config file
-    if config is not None:
-        config = config
-        config = {**vars(args), **config}
-        tag = config['tag'] if 'tag' in config.keys() else str(datetime.now()).replace(' ', '-')
-        extag = config['extag'] if 'extag' in config.keys() else None
+    config=dict({'base_dir':'../runs_debug/',})
+    #  --------  args.config < args < ex_config  ----------
+    if args is not None: 
+        with open(args.config) as f:
+            args_config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     else:
-        if args is not None: 
-            with open(args.config) as f:
-                config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
-        else:
-            config=dict({'base_dir':'../runs/',})
-        # Create runs dir
-        config = {**vars(args), **config}
-        tag = str(datetime.now()).replace(' ', '-') if (args == None) or (args.tag == '') else args.tag
-        extag = None if (args == None) or ('extag' not in (vars(args).keys())) or (args.extag == '') else args.extag
+        args_config = {}
 
+    ex_config = ex_config if ex_config is not None else {}
+    config = {**config, **args_config, **vars(args), **ex_config }
+
+    # -------------  Initialize  -----------------
+    config['tag'] = config['tag'] if 'tag' in config.keys() else str(datetime.now()).replace(' ', '-')
+    config['extag'] = config['extag'] if 'extag' in config.keys() else None
     config['runtime'] = str(datetime.now()).replace(' ', '-')
+
     runs_dir = os.path.join(config['base_dir'], tag)
     config['runs_dir'] = runs_dir
-    config['tag'] = tag
     if not os.path.exists(runs_dir):
         print(f"Make dir '{runs_dir}' !")
         os.makedirs(runs_dir)
@@ -91,8 +99,6 @@ def trans_init(args=None, config=None, mode=None, action='k'):
     config['logger'] = logger.mode
     config['Argv'] = "Argv: " + ' '.join(sys.argv)
     logger.info(config['Argv'])
-    if args is not None:
-        config = {**vars(args), **config}
     dump_yaml(logger, config)
     return logger, config
 
@@ -150,7 +156,7 @@ class MultiLogger(Logger):
         self.tb = None
         self.step = -1
         self.log_dir = log_dir
-        self.mode = mode
+        self.mode = "text_only" if mode is None else mode
         
         if mode == None: mode = []
         if type(mode) is str: mode = [mode]

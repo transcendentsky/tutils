@@ -14,8 +14,6 @@ import torch
 from torch import nn, einsum
 import torch.nn.functional as F
 
-from kornia import augmentation as augs
-from kornia import filters, color
 
 from einops import rearrange
 
@@ -316,6 +314,10 @@ class PixelCL(nn.Module):
         coord_cutout_interpolate_mode = 'bilinear'
     ):
         super().__init__()
+
+        
+        from kornia import augmentation as augs
+        from kornia import filters, color
 
         DEFAULT_AUG = nn.Sequential(
             RandomApply(augs.ColorJitter(0.8, 0.8, 0.8, 0.2), p=0.8),

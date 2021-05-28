@@ -1,0 +1,13 @@
+*__pycache__/*
+.ipynb_checkpoints/*
+.mypy_cache/*
+.vscode/*
+build/*
+dist/*
+*.egg-info/*
+*.jpg
+*.pth
+*.pkl
+*.png
+*.jpg
+*.pyc

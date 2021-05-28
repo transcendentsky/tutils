@@ -10,7 +10,7 @@ from scipy.signal import convolve2d
 import cv2
 # from ._eval_ssim import cal_tensor_ssim, cal_tensor_msssim
 import torch
-import pytorch_ssim
+# import pytorch_ssim
 
 """
 Methods:

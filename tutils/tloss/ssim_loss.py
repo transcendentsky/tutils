@@ -8,12 +8,11 @@ Implementation bellow seems not to be correct, according to this issue:
 https://github.com/Po-Hsun-Su/pytorch-ssim (X)
 """
 
-from piq import ssim
-from piq import SSIMLoss as _SSIMLoss
 import torch
 # For More Metrice, please refers to https://github.com/photosynthesis-team/piq
 
 def SSIMLoss(data_range=1.):
+    from piq import SSIMLoss as _SSIMLoss
     """
     For torch.Tensor
     """
@@ -22,6 +21,7 @@ def SSIMLoss(data_range=1.):
 
 
 def np_ssim(x, y, data_range=1.):
+    from piq import ssim
     x = torch.Tensor(x).unsqueeze(0)
     y = torch.Tensor(y).unsqueeze(0)
     ssim_index: torch.Tensor = ssim(x, y, data_range=1.)

@@ -32,11 +32,11 @@ def cal_metrix_tensor_batch(img1_tensor, img2_tensor, metrix):
     img2 = tensor2np(img2_tensor)
     return cal_metrix_np_batch(img1, img2, metrix)
 
-def cal_ssim_tensor_batch(img1, img2):
-    # # X: (N,3,H,W) a batch of non-negative RGB images (0~255)
-    # # Y: (N,3,H,W)  
-    ssim_loss = pytorch_ssim.SSIM(window_size = 11)
-    return ssim_loss(img1, img2)
+# def cal_ssim_tensor_batch(img1, img2):
+#     # # X: (N,3,H,W) a batch of non-negative RGB images (0~255)
+#     # # Y: (N,3,H,W)  
+#     ssim_loss = pytorch_ssim.SSIM(window_size = 11)
+#     return ssim_loss(img1, img2)
 
 def cal_metrix_np_batch(img1, img2, metrix):
     """

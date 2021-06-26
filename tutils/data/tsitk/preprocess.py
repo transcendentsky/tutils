@@ -2,8 +2,6 @@ import SimpleITK as sitk
 
 
 # ------------------ Spacing  ------------------
-
-
 def resampleImage(Image:sitk.SimpleITK.Image, SpacingScale=None, NewSpacing=None, NewSize=None, Interpolator=sitk.sitkLinear)->sitk.SimpleITK.Image:
     """
     Author: Pengbo Liu

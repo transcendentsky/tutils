@@ -8,11 +8,12 @@ from tutils import tfunctime
 
 
 class Recoder(object):
-    def __init__(self, logger,config):
+    def __init__(self, logger=None, config=None):
         super(Recoder, self).__init__()
         self.logger = logger
         self.config = config
-        self.loss_list = []
+        self.loss_list = None
+        self.loss_keys = None
 
     def clear(self):
         self.loss_list.clear()
@@ -20,17 +21,57 @@ class Recoder(object):
     def record(self, loss):
         if type(loss) == torch.Tensor:
             loss = loss.detach().cpu().item()
+            if self.loss_list is None:
+                self.loss_list = []
+            self.loss_list.append(loss)
         elif type(loss) == list:
             for i, lossi in enumerate(loss):
                 if type(lossi) == torch.Tensor:
                     loss[i] = lossi.detach().cpu().item()
-        self.loss_list.append(loss)
-        
+            if self.loss_list is None:
+                self.loss_list = []
+            self.loss_list.append(loss)
+        elif type(loss) == dict:
+            if self.loss_list is None:
+                self.loss_list = []
+                self.loss_keys = loss.keys
+            l_list = []
+            for lossi, value in loss.items():
+                if type(lossi) == torch.Tensor:
+                    l_list.append(lossi.detach().cpu().item())
+            self.loss_list.append(l_list)
+
     def cal_metrics(self):
         temp = np.array(self.loss_list)
         mean = temp.mean(axis=0)
         # self.logger.info(f"cal_metrics: {mean}")
         return mean
+
+
+# class Recoder(object):
+#     def __init__(self, logger,config):
+#         super(Recoder, self).__init__()
+#         self.logger = logger
+#         self.config = config
+#         self.loss_list = []
+
+#     def clear(self):
+#         self.loss_list.clear()
+
+#     def record(self, loss):
+#         if type(loss) == torch.Tensor:
+#             loss = loss.detach().cpu().item()
+#         elif type(loss) == list:
+#             for i, lossi in enumerate(loss):
+#                 if type(lossi) == torch.Tensor:
+#                     loss[i] = lossi.detach().cpu().item()
+#         self.loss_list.append(loss)
+        
+#     def cal_metrics(self):
+#         temp = np.array(self.loss_list)
+#         mean = temp.mean(axis=0)
+#         # self.logger.info(f"cal_metrics: {mean}")
+#         return mean
 
 class EpochRecorder(object):
     def __init__(self, logger, config, mode="dec"):

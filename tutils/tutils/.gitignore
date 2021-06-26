@@ -1,3 +1,4 @@
+# Directories
 *__pycache__/*
 .ipynb_checkpoints/*
 .mypy_cache/*
@@ -5,9 +6,15 @@
 build/*
 dist/*
 *.egg-info/*
+
+# File types
 *.jpg
 *.pth
 *.pkl
 *.png
 *.jpg
 *.pyc
+
+*.nii.gz
+*.nrrd
+*.dcm

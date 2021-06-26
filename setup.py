@@ -6,7 +6,7 @@ setup(
     author="Curliq",
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(exclude=['test.*']),
-    package_data={'tutils': ['*/config.yaml', '*/.gitignore']}, 
+    package_data={'tutils': ['*/config.yaml', '*/.gitignore', '*/NOTES.md']}, 
     install_requires=[
       'termcolor',
       'einops',

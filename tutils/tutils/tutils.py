@@ -60,14 +60,6 @@ def d(*s, end="\n", **kargs):
         tprint(*s, end="\n", **kargs)
 
 
-def tfuncname(func):
-    def run(*argv, **kargs):
-        p(f"[Trans Utils] Function Name: {func.__name__}")
-        ret = func(*argv, **kargs)
-        return ret
-    return run
-
-
 def time_now():
     return time.strftime("%Y%m%d-%H%M%S", time.localtime())
 

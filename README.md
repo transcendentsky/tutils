@@ -1,7 +1,49 @@
+# Notes
+
+## Three main parts:
+- data: pre-process operations for data, and augmentations
+    - augment
+    - preprocess
+    - SimpleITK ops (medical images reading / saving)
+- train:
+    - models
+    - loss
+    - TODO:
+        - optimizers
+        - schedulers
+- eval:
+    - metrics
+    - radiology analysis
+
+- framework
+    - learner
+    - trainer
+    - tester
+    
+- visualize
+
 # 
+## How to install
 pip install git+http://gitee.com/transcendentsky/tutils.git
 
 #
+# TODO:
+Code checker: 
+    dataloader checking
+    runtime checking
+    
+
+
+
+
+
+
+
+
+
+
+
+
 ## python Source:
 
 阿里云 http://mirrors.aliyun.com/pypi/simple/ 

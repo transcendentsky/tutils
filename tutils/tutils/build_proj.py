@@ -1,19 +1,13 @@
+"""
+    Dataset Preparation:
+        Spacing
+        Intensity Range
+        Normalization: mean std 
+"""
+
 import os
 from tutils import tdir, tfilename, tfuncname
 import shutil
-
-
-# GIT_IGNORE = "__pycache__
-# */runs/*
-# *runs-ana/*
-# */log.log*
-# */visuals/*
-# *.pyc
-# *.jpg
-# *.png
-# *.npy
-# *.npz
-# "
 
 def init_dirs(config):
     for dirname in config['basic_dirs']:
@@ -32,10 +26,11 @@ def build_project():
         ]
     }
     current_dir = os.path.dirname(__file__)
-    shutil.copy(current_dir+"/config.yaml", "./configs/config.yaml")
-    shutil.copy(current_dir+"/.gitignore", "./.gitignore")
     # Init basic dirs
     init_dirs(CONFIG)
+    shutil.copy(current_dir+"/config.yaml", "./configs/config.yaml")
+    shutil.copy(current_dir+"/.gitignore", "./.gitignore")
+    shutil.copy(current_dir+"/NOTES.md", "./NOTES.md")
     # TODO: create .gitignore for Git
     pass
 

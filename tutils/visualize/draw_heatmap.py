@@ -27,19 +27,6 @@ def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
     plt.close()
 
 
-# def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None):
-#     if set_font is not None:
-#         plt.rc('font', family='Times New Roman')
-#     fig = plt.figure()
-#     points = points.flatten()
-#     points2 = points2.flatten()
-#     plt.scatter(points, points2, c=c, label="???")
-#     plt.xlabel("cos")
-#     plt.ylabel("euc")
-#     plt.savefig(fname)
-#     plt.close()
-
-
 def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None, xlabel="x", ylabel="y"):
     plt.ioff()  # Turn off interactive plotting off
     if set_font is not None:
@@ -104,8 +91,3 @@ def draw_saved(dir_path):
                 np.reshape(data_euc[id_landmark], (68, 88)),
                 np.reshape(data_cos[id_landmark], (68, 88)),
                 fname=f"output/img/mark{id_landmark}_im{i}.png")
-
-
-if __name__ == "__main__":
-    draw_saved_scatter("./tmp/")
-    # draw_scripts()

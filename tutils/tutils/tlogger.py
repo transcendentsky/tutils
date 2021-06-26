@@ -54,8 +54,7 @@ def trans_args(parser=None):
     args = parser.parse_args()
     return args   
 
-
-def trans_init(args=None, ex_config=None, mode=None, action='k'):
+def trans_init(args=None, ex_config=None, mode=None, action='k', **kwargs):
     """
     logger, config, tag, runs_dir = trans_init(args, mode=None)
     mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
@@ -80,27 +79,41 @@ def trans_init(args=None, ex_config=None, mode=None, action='k'):
         args_config = {}
 
     ex_config = ex_config if ex_config is not None else {}
-    config = {**config, **args_config, **vars(args), **ex_config }
+    config = {**config, **args_config, **vars(args), **ex_config}
+    return trans_configure(config, mode=None, action='k', **kwargs)
 
+
+def trans_configure(config=None, mode=None, action='k', **kwargs):
     # -------------  Initialize  -----------------
-    config['tag'] = config['tag'] if 'tag' in config.keys() else str(datetime.now()).replace(' ', '-')
+    config['tag'] = config['tag'] if ('tag' in config.keys()) and (config['tag']!="") else str(datetime.now()).replace(' ', '-')
     config['extag'] = config['extag'] if 'extag' in config.keys() else None
-    config['runtime'] = str(datetime.now()).replace(' ', '-')
+    config['__INFO__'] = {}
+    config['__INFO__']['runtime'] = str(datetime.now()).replace(' ', '-')
 
-    runs_dir = os.path.join(config['base_dir'], tag)
+    runs_dir = os.path.join(config['base_dir'], config['tag'])
     config['runs_dir'] = runs_dir
     if not os.path.exists(runs_dir):
         print(f"Make dir '{runs_dir}' !")
         os.makedirs(runs_dir)
     # Create Logger
     # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
-    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=tag, extag=extag, action=action) # backup config.yaml
-    logger.info(config)
-    config['logger'] = logger.mode
-    config['Argv'] = "Argv: " + ' '.join(sys.argv)
-    logger.info(config['Argv'])
+    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=config['tag'], extag=config['extag'], action=action) # backup config.yaml
+    print_dict(config)
+    config['__INFO__']['logger'] = logger.mode
+    config['__INFO__']['Argv'] = "Argv: " + ' '.join(sys.argv)
+    print_dict(config['__INFO__'])
     dump_yaml(logger, config)
     return logger, config
+
+
+def print_dict(_dict):
+    if (type(_dict) is dict) or (type(_dict) is OrderedDict):
+        for key, value in _dict.items():
+            print(key, end=": ")
+            print_dict(value)
+    else:
+        print(_dict)
+
 
 def load_yaml(path):
     with open(path) as f:

@@ -5,6 +5,7 @@
 import torch
 import torchvision
 import monai
+import numpy as np
 
 
 aa = np.arange(3*5*5).reshape((1,3,5,5))

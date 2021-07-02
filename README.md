@@ -22,7 +22,31 @@
     
 - visualize
 
-# 
+# Tutils logger usage
+- trans_args: return args containing 'tag', 'extag', 'config'
+- trans_init: integrate all configs and return to trans_configure
+- trans_configure: set logger, runs dir and config...
+
+## basic usasge
+```
+args = trans_args() or args = trans_args(parser) with custom parser
+```
+then
+```
+logger, config = trans_init(args)
+```
+if you want to use your own configs, you can also try
+```
+logger, config = trans_configure(config)
+```
+
+## MultiLogger 
+Set mode = ['tensorboard', 'wandb']
+```
+logger.add_scaler(key, value, global_step=-1)
+```
+
+
 ## How to install
 pip install git+http://gitee.com/transcendentsky/tutils.git
 

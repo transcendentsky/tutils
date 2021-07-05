@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="tutils",
-    version="1.0.2",
+    version="1.1.0",
     author="Curliq",
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(exclude=['test.*']),

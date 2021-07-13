@@ -3,7 +3,7 @@ import torchvision
 import numpy as np
 import torch.nn as nn
 import cv2
-from ..timg.gaussian import get_guassian_heatmaps_from_ref
+from tutils.data.augment.gaussian import get_guassian_heatmaps_from_ref
 
 
 class MyEntropyLoss:

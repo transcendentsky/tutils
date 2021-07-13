@@ -185,6 +185,8 @@ class MultiLogger(Logger):
             else:
                 self.info(f"Use Tensorboard, log at '{os.path.join(log_dir, 'tb')}'")
                 writer = SummaryWriter(logdir=os.path.join(log_dir, "tb"))
+        # if "xml" in mode or "excel" in mode:
+        #     self.xml_logger = XMLLogger(logdir=os.path.join(log_dir, "xml"))
                 
         # --------- Standard init
         

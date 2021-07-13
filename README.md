@@ -2,6 +2,14 @@
 
 ## Three main parts:
 
+* tutils:
+  * MultiLogger:
+    * logging logger
+    * Wandb logger
+    * Tensorboard logger
+  * Tools:
+    * tfilename / tdir / tenum / timer
+
 - data: pre-process operations for data, and augmentations
 
   - augment
@@ -21,7 +29,14 @@
 - framework
 
   - learner
-  - trainer
+  - trainer:
+
+    - usage:``trainer = Trainer(logger=logger, config=config)``
+  - recorder:
+
+    - Recorder
+    - CSVLogger
+    - ExcelLogger
   - tester
 - visualize
 
@@ -31,7 +46,7 @@
 - trans_init: integrate all configs and return to trans_configure
 - trans_configure: set logger, runs dir and config...
 
-## basic usasge
+## Basic Usasge
 
 ```
 args = trans_args() or args = trans_args(parser) with custom parser
@@ -69,7 +84,7 @@ Code checker:
 dataloader checking
 runtime checking
 
-## python Source:
+## Change Python Source:
 
 阿里云 http://mirrors.aliyun.com/pypi/simple/ 
   中国科技大学 https://pypi.mirrors.ustc.edu.cn/simple/ 

@@ -62,8 +62,9 @@ def _get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 
 class Trainer(object):
-    def __init__(self, logger=None, config=None, mode="ps", gpus=4, sync_batchnorm=True, 
-                tester=None, monitor=None):
+    def __init__(self, logger=None, config=None, mode="ps", runs_dir=None, tag=None,
+                num_epochs=1200, batch_size=4, num_workers=4, save_seq=50, use_amp=False, val_seq=100,
+                tester=None, monitor=None, gpus=4, sync_batchnorm=True, save_latest_only=False, **kwargs):
         """
             mode:
                 ps:  Parameter Server
@@ -77,19 +78,20 @@ class Trainer(object):
         self.init_timers()
         # Config
         self.config = config
-        self.max_epochs = config['training']['num_epochs']
-        self.batch_size = config["training"]['batch_size']
-        self.num_workers = config['training']['num_workers']
-        self.save_seq = config['training']['save_seq']
-        self.use_amp = config['training']['use_amp']
-        self.val_seq = config['validation']['val_seq']
-        self.tag = config['tag']
-        self.runs_dir = config['runs_dir']
+        self.tag = tag # config['tag']
+        self.runs_dir = runs_dir # config['runs_dir']
+        self.max_epochs = num_epochs # config['training']['num_epochs']
+        self.batch_size = batch_size # config["training"]['batch_size']
+        self.num_workers = num_workers # config['training']['num_workers']
+        self.save_seq = save_seq # config['training']['save_seq']
+        self.use_amp = use_amp # config['training']['use_amp']
+        self.val_seq = val_seq # config['validation']['val_seq']
+        self.save_latest_only = save_latest_only
 
         # Other
         self.recorder = Recorder()
         self.recorder_test = Recorder()
-        self.csvlogger = CSVLogger(tfilename(config['runs_dir'], "csv"))
+        self.csvlogger = CSVLogger(tfilename(runs_dir, "csv"))
         self.monitor = monitor
         self.tester = tester
         self.model = None
@@ -247,8 +249,14 @@ class Trainer(object):
         return loss_values
 
     def autosave(self, model, epoch):
+        if self.save_latest_only:
+            return self.save_latest(model, epoch)
         if self.save_seq > 0 and epoch % self.save_seq == 0:
-            self.save(model, epoch)
+            return self.save(model, epoch)
+
+    def save_latest(self, model, epoch):        
+        torch.save(model.net.state_dict(), self.runs_dir + "/model_latest.pth".format(epoch))
+        self.logger.info(f"Epoch {epoch}: Just Saved model to ``{self.runs_dir + '/model_latest.pth'.format(epoch)}``! ")
 
     def save(self, model, epoch):
         torch.save(model.net.state_dict(), self.runs_dir + "/model_epoch_{}.pth".format(epoch))

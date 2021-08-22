@@ -249,9 +249,9 @@ class Trainer(object):
         return loss_values
 
     def autosave(self, model, epoch):
-        if self.save_latest_only:
-            return self.save_latest(model, epoch)
         if self.save_seq > 0 and epoch % self.save_seq == 0:
+            if self.save_latest_only:
+                return self.save_latest(model, epoch)
             return self.save(model, epoch)
 
     def save_latest(self, model, epoch):        

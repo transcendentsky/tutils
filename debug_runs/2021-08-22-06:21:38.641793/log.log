@@ -1,0 +1,2 @@
+[32m[0822 06:21:38 @tlogger.py:282][0m [1m[36mINFO[0m Argv: simple_script_helper.py -c ablation.yaml
+[32m[0822 06:21:38 @tlogger.py:155][0m [1m[36mINFO[0m Saved config.yaml to ./debug_runs/2021-08-22-06:21:38.641793/config.yaml

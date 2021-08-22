@@ -50,6 +50,14 @@ def trans_args(parser=None):
         parser.add_argument("-c", "--config", type=str, default='./configs/config.yaml') 
     except:
         print("Already add '--config' ")
+    try:
+        parser.add_argument("-st", "--stage", type=str, default="")
+    except:
+        print("Already add '--stage' ")
+    try:
+        parser.add_argument("--test", action="store_true")
+    except:
+        print("Already add '--test' ")
     
     args = parser.parse_args()
     return args   
@@ -77,13 +85,44 @@ def trans_init(args=None, ex_config=None, mode=None, action='k', **kwargs):
             args_config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     else:
         args_config = {}
-
     ex_config = ex_config if ex_config is not None else {}
-    config = {**config, **args_config, **vars(args), **ex_config}
-    return trans_configure(config, mode=None, action='k', **kwargs)
+    # Clear some vars with None or ""
+    args        = _clear_config(vars(args))
+    ex_config   = _clear_config(ex_config)
+    # Integrate all settings
+    config = {**config, **args_config, **args, **ex_config}
+    return trans_configure(config, mode=mode, action='k', **kwargs)
 
 
-def trans_configure(config=None, mode=None, action='k', **kwargs):
+def save_script(runs_dir, _file_name):
+    file_path = os.path.abspath(_file_name)
+    parent, name = os.path.split(_file_name)
+    output_path = os.path.join(runs_dir, name)
+    shutil.copy(file_path, output_path)
+    print(f"Saved script file: from {file_path} to {output_path}")
+
+
+def _clear_config(config):
+    if type(config) is dict or type(config) is OrderedDict:
+        pop_key_list = []
+        for key, value in config.items():
+            # print("debug: ", key, value)
+            if value is None or value == "" or value == "None":
+                # print("debug: poped", key, value)
+                pop_key_list.append(key)
+            elif type(value) is dict or type(config) is OrderedDict:
+                _clear_config(value)
+            else:
+                pass
+        for key in pop_key_list:
+            config.pop(key)
+    return config
+BASE_CONFIG = {
+    'base_dir': './runs/'
+
+}
+
+def trans_configure(config=BASE_CONFIG, mode=None, action='k', **kwargs):
     # -------------  Initialize  -----------------
     config['tag'] = config['tag'] if ('tag' in config.keys()) and (config['tag']!="") else str(datetime.now()).replace(' ', '-')
     config['extag'] = config['extag'] if 'extag' in config.keys() else None
@@ -100,7 +139,7 @@ def trans_configure(config=None, mode=None, action='k', **kwargs):
     logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=config['tag'], extag=config['extag'], action=action) # backup config.yaml
     print_dict(config)
     config['__INFO__']['logger'] = logger.mode
-    config['__INFO__']['Argv'] = "Argv: " + ' '.join(sys.argv)
+    config['__INFO__']['Argv'] = "Argv: python " + ' '.join(sys.argv)
     print_dict(config['__INFO__'])
     dump_yaml(logger, config)
     return logger, config

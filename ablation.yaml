@@ -1,0 +1,16 @@
+ablation:
+  tag: "ablation_test"
+  config_file: "conf.yaml"
+  script_file: "demo_train_script.py"
+  is: true
+  count: 2
+  opts:
+    training:
+      batch_size: [4,8]
+      num_workers: [2,3]
+
+#  opts: ['training:batch_size', 'training:num_workers']
+
+gpus: "0,1,2,3"
+base_dir: './debug_runs/'
+tag: 'notag'

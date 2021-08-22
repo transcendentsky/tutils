@@ -1,5 +1,14 @@
-base_dir: '../runs-3d/'
-tag: 'notag'
+ablation:
+  is: true
+  opts: ['training:batch_size', 'training:num_workers']
+
+debug:
+  debug1: ""
+  debug2: None
+  debug3: "None"
+
+base_dir: './debug_runs/'
+#tag: 'anotag'
 
 dataset:
   pth: '/home1/quanquan/datasets/Head-and-Neck-challenge/preprocessed/'

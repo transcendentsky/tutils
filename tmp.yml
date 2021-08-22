@@ -5,9 +5,9 @@ alist:
 test:
   epoch: 200
   tag: Test2
-train:
-  decay: 0.002
-  epoch: 500
-  lr: 0.0001
-  moment: 0.5
-  tag: Train1
+
+
+debug:
+  debug1: ""
+  debug2: None
+  debug3: "None"

@@ -6,7 +6,8 @@ setup(
     author="Curliq",
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(exclude=['test.*']),
-    package_data={'tutils': ['*/config.yaml', '*/.gitignore', '*/NOTES.md']}, 
+    package_data={'tutils': ['*/config.yaml', '*/.gitignore', '*/NOTES.md', '*/ttest.csv'],
+                  'proj': ['*/proj-template/*', '*/proj-template/code/configs/config.yaml', ]},
     install_requires=[
       'termcolor',
       'einops',
@@ -25,7 +26,7 @@ setup(
   ],
   entry_points={
     'console_scripts': [
-      'trans_build = tutils.tutils.build_proj:build_project', 
+      'trans_build = tutils.tutils.build_proj:main',
     ],
   },
 )

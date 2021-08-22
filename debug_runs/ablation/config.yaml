@@ -1,0 +1,16 @@
+__INFO__:
+  Argv: 'Argv: train_ablation.py'
+  logger: text_only
+  runtime: 2021-08-22-03:40:28.971685
+ablation:
+  is: true
+  opts:
+  - training:batch_size
+  - training:num_workers
+base_dir: ./debug_runs/
+config: ablation.yaml
+extag: ''
+runs_dir: ./debug_runs/ablation
+stage: ''
+tag: ablation
+test: false

@@ -19,7 +19,7 @@ def make_file(name):
     with open(name, 'w') as f:
         pass
 
-def build_project():
+def build_project_v0():
     CONFIG = {
     "basic_dirs": [
         'configs', 'datasets', 'networks', 'utils', 'scripts', 'tmp', 'runs'
@@ -35,5 +35,15 @@ def build_project():
     pass
 
 
+def build_project_v1():
+    current_dir = os.path.dirname(__file__)
+    shutil.copy(current_dir + "/code", "./code")
+    shutil.copy(current_dir + "/data", "./data")
+    shutil.copy(current_dir + "/runs", "./runs")
+
+
+def main():
+    build_project_v1()
+
 if __name__ == '__main__':
-    build_project()
+    main()

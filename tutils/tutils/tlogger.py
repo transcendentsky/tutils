@@ -25,8 +25,6 @@ from pathlib import Path
 import argparse
 import sys
 from collections import OrderedDict
-# import traceback
-# from typing import List, Dict
 
 INFO = INFO
 DEBUG = DEBUG
@@ -94,33 +92,41 @@ def trans_init(args=None, ex_config=None, mode=None, action='k', **kwargs):
     return trans_configure(config, mode=mode, action='k', **kwargs)
 
 
-def save_script(runs_dir, _file_name):
+def save_script(runs_dir, _file_name, logger=None):
     file_path = os.path.abspath(_file_name)
     parent, name = os.path.split(_file_name)
     output_path = os.path.join(runs_dir, name)
     shutil.copy(file_path, output_path)
-    print(f"Saved script file: from {file_path} to {output_path}")
+    with open(os.path.join(parent, "save_script.log"), "w") as f:
+        f.write(f"Script location: {_file_name} \n")
+    if logger is not None:
+        logger.info(f"Saved script file: from {file_path} to {output_path}")
+    else:
+        print(f"Saved script file: from {file_path} to {output_path}")
 
 
 def _clear_config(config):
-    if type(config) is dict or type(config) is OrderedDict:
+    # if type(config) is dict or type(config) is OrderedDict:
+    if isinstance(config, (dict, OrderedDict)):
         pop_key_list = []
         for key, value in config.items():
             # print("debug: ", key, value)
             if value is None or value == "" or value == "None":
                 # print("debug: poped", key, value)
                 pop_key_list.append(key)
-            elif type(value) is dict or type(config) is OrderedDict:
+            elif isinstance(config, (dict, OrderedDict)):
                 _clear_config(value)
             else:
                 pass
         for key in pop_key_list:
             config.pop(key)
     return config
+
+
 BASE_CONFIG = {
     'base_dir': './runs/'
-
 }
+
 
 def trans_configure(config=BASE_CONFIG, mode=None, action='k', **kwargs):
     # -------------  Initialize  -----------------
@@ -135,7 +141,6 @@ def trans_configure(config=BASE_CONFIG, mode=None, action='k', **kwargs):
         print(f"Make dir '{runs_dir}' !")
         os.makedirs(runs_dir)
     # Create Logger
-    # logger = get_mylogger(multi=multi, flag=tag, log_dir=runs_dir)
     logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=config['tag'], extag=config['extag'], action=action) # backup config.yaml
     print_dict(config)
     config['__INFO__']['logger'] = logger.mode
@@ -146,7 +151,7 @@ def trans_configure(config=BASE_CONFIG, mode=None, action='k', **kwargs):
 
 
 def print_dict(_dict):
-    if (type(_dict) is dict) or (type(_dict) is OrderedDict):
+    if issubclass(_dict, (dict, OrderedDict)):
         for key, value in _dict.items():
             print(key, end=": ")
             print_dict(value)
@@ -159,8 +164,9 @@ def load_yaml(path):
         config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     return config
 
+
 def ordereddict_to_dict(d):
-    if type(d) not in [OrderedDict, dict]:
+    if not issubclass(d, dict):
         return d
     for k, v in d.items():
         if type(v) == OrderedDict:
@@ -171,6 +177,7 @@ def ordereddict_to_dict(d):
         elif type(v) == dict:
             d[k] = ordereddict_to_dict(v)
     return d
+
 
 def dump_yaml(logger, config, path=None, verbose=True):
     # Backup existing yaml file
@@ -185,18 +192,6 @@ def dump_yaml(logger, config, path=None, verbose=True):
     if verbose:
         logger.info(f"Saved config.yaml to {path}")
 
-# def get_mylogger(multi=False, level=logging.INFO, flag="MyLogger", log_dir=None, action='k', file_name='log.log'):
-#     logger = logging.getLogger(flag)
-#     if multi:
-#         logger = MultiLogger(flag=flag, mode="tb", log_dir=log_dir)
-#     logger.propagate = False
-#     logger.setLevel(level)
-#     handler = logging.StreamHandler()
-#     handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
-#     logger.addHandler(handler)
-#     if log_dir is not None:
-#         set_logger_dir(logger, log_dir, action, file_name)
-#     return logger
 
 class MultiLogger(Logger):
     def __init__(self, log_dir, mode=None, flag="MyLogger",extag=None, level=logging.INFO, action='k', file_name='log.log'):

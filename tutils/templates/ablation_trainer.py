@@ -89,9 +89,10 @@ class AblationTrainer(object):
 
 def template(_file_name):
     from tutils import trans_args, trans_init, load_yaml, dump_yaml
-    args = trans_args()
-    # args.tag = "ablation"
-    args.config = "ablation.yaml"
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="configs/ablation.yaml")
+    args = trans_args(parser)
     logger, config = trans_init(args)
     if config['ablation']['is']:
         # Check opts to do ablation

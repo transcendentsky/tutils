@@ -2,7 +2,7 @@ import shutil
 import xlwt
 from typing import List
 import numpy as np
-from tutils.tutils import tfilename
+from .tutils import tfilename
 from datetime import datetime
 import os
 import csv

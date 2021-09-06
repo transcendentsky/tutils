@@ -1,4 +1,4 @@
-from .tutils import p, d
+from .functools import p, d
 
 def tfunctag(tag=None):
     def _tfunc_decorator(func):

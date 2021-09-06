@@ -6,7 +6,6 @@
 (4) Our method and advantage to the problem
 (5) Our contribution: are summarized as follows:
 
-
 ## Related work
 
 ## Method
@@ -23,9 +22,11 @@
 
 #### Module 1
 
-% (why we propose this module?) Nowadays existing problem , Therefore, we propose a module to solve such a problem by xxx
+Insight，
 
-% (Compare with related work) Our idea is inspired by xxx, but previous work cannot do this, so we modified/add the function/xxx
+1. Our goal is to , ....., so we try to do ...
+2. % (why we propose this module?) Due to the nowadays existing problem , Therefore, we propose a module to solve such a problem by xxx
+3. % (Compare with related work) Our idea is inspired by xxx, but previous work cannot do this, so we modified/add the function/xxx
 
 #### Module 2
 
@@ -33,6 +34,8 @@
 % Therefore we propose a module xxx
 
 #### Module 3
+
+Insight
 
 % To further improve module 2, xxx
 

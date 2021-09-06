@@ -1,11 +1,11 @@
 ### NOTE: config in ./code/configs/config.yaml
 
-base_dir: '../runs-3d/'
+base_dir: '../runs-3d/'  # [*]
 tag: 'notag'
 runs_dir: '../runs-3d/'
 
 dataset:
-  pth: '/home1/quanquan/datasets/Head-and-Neck-challenge/data/'
+  pth: '/home1/quanquan/datasets/Head-and-Neck-challenge/data/' 
 training:
   batch_size : 4
   num_workers : 4

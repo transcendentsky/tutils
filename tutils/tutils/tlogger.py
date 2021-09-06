@@ -19,12 +19,12 @@ from logging import INFO, DEBUG, WARNING, CRITICAL, ERROR
 from datetime import datetime
 from six.moves import input
 from termcolor import colored
-import yaml
-import yamlloader
-from pathlib import Path
-import argparse
+# from pathlib import Path
+# import argparse
 import sys
 from collections import OrderedDict
+from .functools import _get_time_str
+from .csv_recorder import CSVLogger
 
 INFO = INFO
 DEBUG = DEBUG
@@ -33,177 +33,19 @@ CRITICAL = CRITICAL
 ERROR = ERROR
 
 
-def trans_args(parser=None):
-    if parser is None:
-        parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
-    try:
-        parser.add_argument("-t", "--tag", type=str, default="")
-    except:
-        print("Already add '--tag' ")
-    try:
-        parser.add_argument("-et", "--extag", type=str, default="")
-    except:
-        print("Already add '--extag' ")
-    try:
-        parser.add_argument("-c", "--config", type=str, default='./configs/config.yaml') 
-    except:
-        print("Already add '--config' ")
-    try:
-        parser.add_argument("-st", "--stage", type=str, default="")
-    except:
-        print("Already add '--stage' ")
-    try:
-        parser.add_argument("--test", action="store_true")
-    except:
-        print("Already add '--test' ")
-    
-    args = parser.parse_args()
-    return args   
-
-def trans_init(args=None, ex_config=None, mode=None, action='k', **kwargs):
-    """
-    logger, config, tag, runs_dir = trans_init(args, mode=None)
-    mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
-    
-    action: "d": delete the directory. Note that the deletion may fail when
-                the directory is used by tensorboard.
-                "k": keep the directory. This is useful when you resume from a
-                previous training and want the directory to look as if the
-                training was not interrupted.
-                Note that this option does not load old models or any other
-                old states for you. It simply does nothing.
-                "b" : copy the old dir
-                "n" : New an new dir by time
-    """
-    # Load yaml config file
-    config=dict({'base_dir':'../runs_debug/',})
-    #  --------  args.config < args < ex_config  ----------
-    if args is not None: 
-        with open(args.config) as f:
-            args_config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
-    else:
-        args_config = {}
-    ex_config = ex_config if ex_config is not None else {}
-    # Clear some vars with None or ""
-    args        = _clear_config(vars(args))
-    ex_config   = _clear_config(ex_config)
-    # Integrate all settings
-    config = {**config, **args_config, **args, **ex_config}
-    return trans_configure(config, mode=mode, action='k', **kwargs)
-
-
-def save_script(runs_dir, _file_name, logger=None):
-    file_path = os.path.abspath(_file_name)
-    parent, name = os.path.split(_file_name)
-    output_path = os.path.join(runs_dir, name)
-    shutil.copy(file_path, output_path)
-    with open(os.path.join(parent, "save_script.log"), "w") as f:
-        f.write(f"Script location: {_file_name} \n")
-    if logger is not None:
-        logger.info(f"Saved script file: from {file_path} to {output_path}")
-    else:
-        print(f"Saved script file: from {file_path} to {output_path}")
-
-
-def _clear_config(config):
-    # if type(config) is dict or type(config) is OrderedDict:
-    if isinstance(config, (dict, OrderedDict)):
-        pop_key_list = []
-        for key, value in config.items():
-            # print("debug: ", key, value)
-            if value is None or value == "" or value == "None":
-                # print("debug: poped", key, value)
-                pop_key_list.append(key)
-            elif isinstance(config, (dict, OrderedDict)):
-                _clear_config(value)
-            else:
-                pass
-        for key in pop_key_list:
-            config.pop(key)
-    return config
-
-
-BASE_CONFIG = {
-    'base_dir': './runs/'
-}
-
-
-def trans_configure(config=BASE_CONFIG, mode=None, action='k', **kwargs):
-    # -------------  Initialize  -----------------
-    config['tag'] = config['tag'] if ('tag' in config.keys()) and (config['tag']!="") else str(datetime.now()).replace(' ', '-')
-    config['extag'] = config['extag'] if 'extag' in config.keys() else None
-    config['__INFO__'] = {}
-    config['__INFO__']['runtime'] = str(datetime.now()).replace(' ', '-')
-
-    runs_dir = os.path.join(config['base_dir'], config['tag'])
-    config['runs_dir'] = runs_dir
-    if not os.path.exists(runs_dir):
-        print(f"Make dir '{runs_dir}' !")
-        os.makedirs(runs_dir)
-    # Create Logger
-    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=config['tag'], extag=config['extag'], action=action) # backup config.yaml
-    print_dict(config)
-    config['__INFO__']['logger'] = logger.mode
-    config['__INFO__']['Argv'] = "Argv: python " + ' '.join(sys.argv)
-    print_dict(config['__INFO__'])
-    dump_yaml(logger, config)
-    return logger, config
-
-
-def print_dict(_dict):
-    if issubclass(_dict, (dict, OrderedDict)):
-        for key, value in _dict.items():
-            print(key, end=": ")
-            print_dict(value)
-    else:
-        print(_dict)
-
-
-def load_yaml(path):
-    with open(path) as f:
-        config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
-    return config
-
-
-def ordereddict_to_dict(d):
-    if not issubclass(d, dict):
-        return d
-    for k, v in d.items():
-        if type(v) == OrderedDict:
-            v = ordereddict_to_dict(v)
-            d[k] = dict(v)
-        elif type(v) == list:
-            d[k] = ordereddict_to_dict(v)
-        elif type(v) == dict:
-            d[k] = ordereddict_to_dict(v)
-    return d
-
-
-def dump_yaml(logger, config, path=None, verbose=True):
-    # Backup existing yaml file
-    path = config['runs_dir'] + "/config.yaml" if path is None else path
-    if os.path.isfile(path):
-        backup_name = path + '.' + _get_time_str()
-        shutil.move(path, backup_name)
-        logger.info(f"Existing yaml file '{path}' backuped to '{backup_name}' ")
-    with open(path, "w") as f:
-        config = ordereddict_to_dict(config)
-        yaml.dump(config, f)
-    if verbose:
-        logger.info(f"Saved config.yaml to {path}")
-
-
 class MultiLogger(Logger):
     def __init__(self, log_dir, mode=None, flag="MyLogger",extag=None, level=logging.INFO, action='k', file_name='log.log'):
         """
-        mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
+        mode: "wandb", "tb" or "tensorboard", "csv" : ["wandb", "tensorboard", "csv"]
         """
         super(MultiLogger, self).__init__(flag)
-        self.wandb = None
-        self.tb = None
         self.step = -1
         self.log_dir = log_dir
-        self.mode = "text_only" if mode is None else mode
+        self.mode = "logging_only" if mode is None else mode
+        self.wandb_logger = None
+        self.tb_logger = None
+        self.csv_logger = None
+        self.text_logger = None
         
         if mode == None: mode = []
         if type(mode) is str: mode = [mode]
@@ -211,78 +53,88 @@ class MultiLogger(Logger):
             import wandb
             wandb.init(project=flag)
             wandb.watch_called = False
-            self.wandb = wandb
+            self.wandb_logger = wandb
         if "tb" in mode or "tensorboard" in mode:
             from tensorboardX import SummaryWriter
             if log_dir is None:
                 self.warning(f"Failed to turn on Tensorboard due to logdir=None")
             else:
                 self.info(f"Use Tensorboard, log at '{os.path.join(log_dir, 'tb')}'")
-                writer = SummaryWriter(logdir=os.path.join(log_dir, "tb"))
-        # if "xml" in mode or "excel" in mode:
-        #     self.xml_logger = XMLLogger(logdir=os.path.join(log_dir, "xml"))
-                
+                self.tb_logger = SummaryWriter(logdir=os.path.join(log_dir, "tb"))
+        if "csv" in mode:
+            self.csv_logger = CSVLogger(logdir=os.path.join(log_dir, "csv"))
+
         # --------- Standard init
         
         self.propagate = False
         self.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setFormatter(_MyFormatter(tag=flag, extag=extag, datefmt='%m%d %H:%M:%S'))
+        # handler = logging.FileHandler('test.log', 'w', 'utf-8') # or whatever
+        handler.setFormatter(_MyFormatter(tag=flag, extag=extag, datefmt='%Y-%m-%d %H:%M:%S'))
         self.addHandler(handler)
-        set_logger_dir(self, log_dir, action, file_name)
+        set_logger_dir(self, log_dir, action, file_name, tag=flag, extag=extag)
 
-    def tlog(self, dicts:dict={}, step=-1, verbose=False):
-        if self.wandb is not None:
-            self.wandb.log(dicts)
-        if self.tb is not None:
+    def add_scalars(self, dicts:dict={}, step=-1, verbose=True):
+        
+        if self.wandb_logger is not None:
+            self.wandb_logger.log(dicts)
+
+        if self.tb_logger is not None:
             if step < 0:
                 step = self.step
             for key, value in dicts.items():
-                self.tb.add_scaler(key, value, global_step=step)
-        self.step = self.step + 1
-        if verbose:
-            string = f"[tlog] Step:{self.step}  "
-            for key, value in dicts.items():
-                string += f"{key}:{value};"
-            self.info(string)
+                self.tb_logger.add_scaler(key, value, global_step=step)
 
-    def add_scalar(self, key, value, global_step=-1, verbose=False):
-        if self.wandb is not None:
-            self.wandb.log({key:value})
-        if self.tb is not None:
+        if self.csv_logger is not None:
+            self.csv_logger.record(dicts)
+        self.step = self.step + 1
+
+        if self.text_logger is not None:
+            if verbose:
+                string = f"[tlog] Step:{self.step}  "
+                for key, value in dicts.items():
+                    string += f"{key}:{value};"
+                self.info(string)
+
+    def add_scalar(self, key, value, global_step=-1, verbose=True):
+        if self.wandb_logger is not None:
+            self.wandb_logger.log({key:value})
+
+        if self.tb_logger is not None:
             if global_step < 0:
                 global_step = self.step
-            self.tb.add_scalar(key, value, global_step)
+            self.tb_logger.add_scalar(key, value, global_step)
+
+        if self.csv_logger is not None:
+            self.csv_logger.record({key:value})
+
         self.step = self.step + 1
-        if verbose:
-            self.info(f"[add_scalar] Step:{global_step}  {key}:{value}")
+
+        if self.text_logger is not None:
+            if verbose:
+                self.info(f"[add_scalar] Step:{global_step}  {key}:{value}")
     
+
 class _MyFormatter(logging.Formatter):
-    def __init__(self, tag=None, extag=None, *args, **kwargs):
+    def __init__(self, tag=None, extag=None, colorful=True, *args, **kwargs):
         self.tag = tag
         self.extag = extag
+        self.colorful = colorful
         extag = '-' + extag if (extag is not None and extag != '') else ''
-        print(tag, extag)
-        self.taginfo = colored(f' [{tag + extag}]', 'yellow') if tag is not None else ''
+        # print(tag, extag)
+        self.taginfo = self._colored_str(f'[{tag + extag}]', 'yellow') if tag is not None else ''        
         super(_MyFormatter, self).__init__(*args, **kwargs)
         
-    def format(self, record):
-        tag = self.tag
-        extag = self.extag
-        
-        date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
+    def format(self, record):    
+        date = self._colored_str('[%(asctime)s @%(filename)s:%(lineno)d] ', 'green')
         date = date + self.taginfo
         msg = '%(message)s'
-        if record.levelno == logging.WARNING:
-            fmt = date + ' ' + colored('WRN', 'yellow', attrs=['blink']) + ' ' + msg
-        elif record.levelno == logging.ERROR :
-            fmt = date + ' ' + colored('ERR', 'red', attrs=['blink']) + ' ' + msg
-        elif record.levelno == logging.DEBUG:
-            fmt = date + ' ' + colored('DBG', 'magenta', attrs=['bold']) + ' ' + msg
+        if record.levelno == logging.WARNING or record.levelno == logging.DEBUG:
+            fmt = date + ' ' + self._colored_str('WRN', 'yellow', attrs=['blink']) + ' ' + msg
+        elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
+            fmt = date + ' ' + self._colored_str('ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg
         elif record.levelno == logging.INFO:
-            fmt = date + ' ' + colored('INFO', 'cyan', attrs=['bold']) + ' ' + msg
-        elif record.levelno == logging.CRITICAL:
-            fmt = date + ' ' + colored('CRITICAL', 'red', attrs=['blink', 'underline']) + ' ' + msg
+            fmt = date + ' ' + self._colored_str('INFO', 'cyan', attrs=['bold']) + ' ' + msg
         else:
             fmt = date + ' ' + msg
         if hasattr(self, '_style'):
@@ -291,24 +143,28 @@ class _MyFormatter(logging.Formatter):
         self._fmt = fmt
         return super(_MyFormatter, self).format(record)
 
-def _get_time_str():
-    return datetime.now().strftime('%m%d-%H%M%S')
+    def _colored_str(self, text, *args, **kwargs):
+        if self.colorful:
+            return colored(text, *args, **kwargs)
+        else:
+            return text
 
-def _set_file(logger, path):
+
+def _set_file(logger, path, tag=None, extag=None):
     if os.path.isfile(path):
         backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)
         logger.info("Existing log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
-    hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
+    hdl.setFormatter(_MyFormatter(tag=tag, extag=extag, datefmt='%Y-%m-%d-%H:%M:%S', colorful=False))
 
     _FILE_HANDLER = hdl
     logger.addHandler(hdl)
-    logger.info("Argv: " + ' '.join(sys.argv))
+    logger.info("Argv: python " + ' '.join(sys.argv))
 
 
-def set_logger_dir(logger, dirname='log', action='k', file_name='log.log'):
+def set_logger_dir(logger, dirname='log', action='k', file_name='log.log', tag=None, extag=None):
     """
     Set the directory for global logging.
     Args:
@@ -345,10 +201,11 @@ def set_logger_dir(logger, dirname='log', action='k', file_name='log.log'):
             pass
         else:
             raise OSError("Directory {} exits!".format(dirname))
-    mkdir_p(dirname)
-    _set_file(logger, os.path.join(dirname, file_name))
+    _mkdir_p(dirname)
+    _set_file(logger, os.path.join(dirname, file_name), tag=tag, extag=extag)
 
-def mkdir_p(dirname):
+
+def _mkdir_p(dirname):
     """ Like "mkdir -p", make a dir recursively, but do nothing if the dir exists
     Args:
         dirname(str):

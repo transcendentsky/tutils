@@ -7,6 +7,14 @@ from .tutils import tfilename
 import numpy as np
 import datetime
 
+
+def trans_time():
+    """
+        print time str of now
+    """
+    return datetime.datetime.now().strftime('%m%d-%H%M%S')
+
+
 class tenum:
     def __init__(self, iter):
         self.stop_time = time.time()
@@ -24,11 +32,13 @@ class tenum:
         iter_time = end - self.stop_time
         self.stop_time = end
         return (end-start), i, res
-      
+
+
 def format_result(result):
     date = datetime.datetime.utcfromtimestamp(result)
     output = datetime.datetime.strftime(date, "%M:%S:%f")
     return output
+
 
 class timer(object):
     def __init__(self, flag=None, verbose=False):

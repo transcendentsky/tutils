@@ -51,6 +51,7 @@ class AblationTrainer(object):
         self.script_file = ablation_config["ablation"]['script_file']
         self.opts = ablation_config['ablation']['opts']
         self.gpus = ablation_config['gpus']
+        self.args = ablation_config['ablation']['args']
 
     def build_tmp_config_file(self):
         base_config = load_yaml(self.config_file)
@@ -66,7 +67,23 @@ class AblationTrainer(object):
         # print("debug build_tmp_config_file: ", config_list)
         return config_list
 
-    def train(self):
+    def build_tmp_args_list(self):
+        # Split ablation opts
+        config_list = []
+        for i in range(self.count_total):
+            opt = copy.deepcopy(self.args)
+            one_opt = _config_parsing(opt, i)
+            config_list.append(one_opt)
+        # print("debug build_tmp_config_file: ", config_list)
+        return config_list
+
+    def run(self):
+        """
+            For Instance, please read run_train / run_test
+        """
+        pass
+
+    def run_train(self):
         config_list = self.build_tmp_config_file()
         for i, config in enumerate(config_list):
             dump_yaml(self.logger, config, path="_tmp_config.yaml")
@@ -76,7 +93,7 @@ class AblationTrainer(object):
             ret_value = subprocess.call(cmd, shell=True)
             self.logger.info(f"ret value: {ret_value}")
 
-    def test(self):
+    def run_test(self):
         config_list = self.build_tmp_config_file()
         for i, config in enumerate(config_list):
             dump_yaml(self.logger, config, path="_tmp_config.yaml")
@@ -85,6 +102,17 @@ class AblationTrainer(object):
             self.logger.info(f"Run cmd: {cmd}")
             ret_value = subprocess.call(cmd, shell=True)
             self.logger.info(f"ret value: {ret_value}")
+
+    def run_args(self):
+        args_list = self.build_tmp_args_list()
+        for i, args in enumerate(args_list):
+            tag = self.ablation_config['tag'] + "/" + self.ablation_config['ablation']['tag'] + f"_try{i}"
+            cmd = f"CUDA_VISIBLE_DEVICES={self.gpus} python {self.script_file} --sessionname {args['sessionname']} -r aae --dataset wflw " \
+                  f"--train-count {args['train_count']}"
+            self.logger.info(f"Run cmd: {cmd}")
+            ret_value = subprocess.call(cmd, shell=True)
+            self.logger.info(f"ret value: {ret_value}")
+
 
 
 def template(_file_name):

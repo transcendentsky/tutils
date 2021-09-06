@@ -4,3 +4,4 @@ from .ttimer import *
 # from .tlogger import trans_init, trans_args, dump_yaml
 from .tlogger import *
 from .techo import *
+from .initializer import *

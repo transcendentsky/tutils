@@ -5,11 +5,14 @@ ablation:
   script_file: "demo_train_script.py"
   # script_file: "-m scripts.demo_train_script"
   is: true
-  count: 2
+  count: 4
   opts:
     training:
       batch_size: [4,8]
       num_workers: [2,3]
+  args:
+    sessionname: ['lms_wflw_50_s9_from_aee','lms_wflw_50_s10_from_aee','lms_wflw_50_s11_from_aee','lms_wflw_50_s12_from_aee']
+    train_count: [50,50,50,50]
 
 #  opts: ['training:batch_size', 'training:num_workers']
 

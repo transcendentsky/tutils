@@ -1,81 +1,44 @@
+
+import yaml
+import yamlloader
+import shutil
 import os
-import numpy as np
-# import torch
-import random
-import torchvision
-import string
-
-import random
-import time
-import cv2
-
-from pathlib import Path
+from .functools import d, _get_time_str, _ordereddict_to_dict
 
 
-class Config(object):
-    def __init__(self):
-        super().__init__()
-        self.TUTILS_DEBUG = False
-        self.TUTILS_INFO = False
-        self.TUTILS_WARNING = True
-
-    def set_print_debug(self, setting=True):
-        self.TUTILS_DEBUG = setting
-
-    def set_print_info(self, setting=True):
-        self.TUTILS_INFO = setting
-
-    def set_print_warning(self, setting=True):
-        self.TUTILS_WARNING = setting
-
-tconfig = Config()
-
-def tprint(*s, end="\n", **kargs):
-    if len(s) > 0:
-        for x in s:
-            print(x, end="")
-        print("", end=end)
-    if len(kargs) > 0:
-        for key, item in kargs.items():
-            print(key, end=": ")
-            print(item, end="")
-        print("", end=end)
+def save_script(runs_dir, _file_name, logger=None):
+    file_path = os.path.abspath(_file_name)
+    parent, name = os.path.split(_file_name)
+    output_path = os.path.join(runs_dir, name)
+    shutil.copy(file_path, output_path)
+    with open(os.path.join(parent, "save_script.log"), "w") as f:
+        f.write(f"Script location: {_file_name} \n")
+    if logger is not None:
+        logger.info(f"Saved script file: from {file_path} to {output_path}")
+    else:
+        print(f"Saved script file: from {file_path} to {output_path}")
 
 
-def p(*s, end="\n", **kargs):
-    if tconfig.TUTILS_INFO or tconfig.TUTILS_DEBUG or tconfig.TUTILS_WARNING:
-        print("[Trans Info] ", end="")
-        tprint(*s, end="\n", **kargs)
+
+def dump_yaml(logger, config, path=None, verbose=True):
+    # Backup existing yaml file
+    path = config['runs_dir'] + "/config.yaml" if path is None else path
+    if os.path.isfile(path):
+        backup_name = path + '.' + _get_time_str()
+        shutil.move(path, backup_name)
+        logger.info(f"Existing yaml file '{path}' backuped to '{backup_name}' ")
+    with open(path, "w") as f:
+        config = _ordereddict_to_dict(config)
+        yaml.dump(config, f)
+    if verbose:
+        logger.info(f"Saved config.yaml to {path}")
 
 
-def w(*s, end="\n", **kargs):
-    if tconfig.TUTILS_WARNING or tconfig.TUTILS_DEBUG:
-        print("[Trans Warning] ", end="")
-        tprint(*s, end="\n", **kargs)
+def load_yaml(path):
+    with open(path) as f:
+        config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+    return config
 
-
-def d(*s, end="\n", **kargs):
-    if tconfig.TUTILS_DEBUG:
-        print("[Trans Debug] ", end="")
-        tprint(*s, end="\n", **kargs)
-
-
-def time_now():
-    return time.strftime("%Y%m%d-%H%M%S", time.localtime())
-
-
-def generate_random_str(n: int = 6):
-    ran_str = ''.join(random.sample(string.ascii_letters + string.digits, n))
-    return ran_str
-
-
-def generate_name():
-    return time_now() + '-' + generate_random_str(6)
-
-
-# def write_image_np(image, filename):
-#     cv2.imwrite("wc_" + generate_random_str(5)+'-'+ time_now() +".jpg", image.astype(np.uint8))
-#     pass
 
 def tdir(*dir_paths):
     def checkslash(name):
@@ -125,17 +88,6 @@ def tfilename(*filenames):
 def texists(*filenames):
     path = os.path.join(*filenames)
     return os.path.exists(path)
-
-
-# def ttsave(state, path, configs=None):
-#     path = tdir("trans_torch_models", path, generate_name())
-#     if configs is not None:
-#         assert type(configs) is dict
-#         config_path = tfilename(path, "configs.json")
-#         with open(config_path, "wb+") as f:
-#             config_js = json.dumps(configs)
-#             f.write(config_js)
-#     torch.save(state, tfilename(path, "model.pth"))
 
 
 def add_total(tuple1, tuple2):

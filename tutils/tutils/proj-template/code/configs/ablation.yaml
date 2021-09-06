@@ -1,3 +1,6 @@
+#
+# python ablation_trainer.py --config configs/ablation.config
+
 ablation:
   is: true
   opts: ['training:batch_size', 'training:num_workers']

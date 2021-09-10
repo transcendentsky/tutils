@@ -130,9 +130,11 @@ class _MyFormatter(logging.Formatter):
         date = date + self.taginfo
         msg = '%(message)s'
         if record.levelno == logging.WARNING or record.levelno == logging.DEBUG:
-            fmt = date + ' ' + self._colored_str('WRN', 'yellow', attrs=['blink']) + ' ' + msg
+            fmt = date + ' ' + self._colored_str('WRN', 'yellow', attrs=['blink']) + '' + msg + ' \nPath: [%(pathname)s] ' + \
+                 '\nProcess: [%(process)d %(processName)s]' + '\nThread: [%(thread)d %(threadName)s]'
         elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
-            fmt = date + ' ' + self._colored_str('ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg
+            fmt = date + ' ' + self._colored_str('ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg + ' \nPath: [%(pathname)s] ' + \
+                 '\nProcess: [%(process)d %(processName)s]' + '\nThread: [%(thread)d %(threadName)s]'
         elif record.levelno == logging.INFO:
             fmt = date + ' ' + self._colored_str('INFO', 'cyan', attrs=['bold']) + ' ' + msg
         else:

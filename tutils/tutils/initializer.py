@@ -1,3 +1,13 @@
+"""
+    usage:
+        args = trans_args()
+        logger, config = trans_init(args)
+    or:
+        args = trans_args(parser)
+        logger, config = trans_init(args, ex_config=BASE_CONFIG)
+    
+
+"""
 # from termcolor import colored
 import yaml
 import yamlloader
@@ -13,32 +23,48 @@ from .tutils import dump_yaml
 from .functools import _clear_config, _print_dict
 
 BASE_CONFIG = {
-    'base_dir': './runs/'
+    'base': {
+        'base_dir'  : './runs_debug/',
+        'experiment': "test_param1",
+        'tag': '',
+        'stage': '', 
+        'extag': '',
+        },    
+    'logger':{
+        'mode': None, # "wandb", "tensorboard", 'csv'
+        'action': 'k', 
+    }
 }
 
 
-def trans_configure(config=BASE_CONFIG, mode=None, action='k', **kwargs):
+def trans_configure(config=BASE_CONFIG, **kwargs):
     # -------------  Initialize  -----------------
-    config['tag'] = config['tag'] if ('tag' in config.keys()) and (config['tag']!="") else str(datetime.now()).replace(' ', '-')
-    config['extag'] = config['extag'] if 'extag' in config.keys() else None
-    config['__INFO__'] = {}
-    config['__INFO__']['runtime'] = str(datetime.now()).replace(' ', '-')
-
-    runs_dir = os.path.join(config['base_dir'], config['tag'])
-    config['runs_dir'] = runs_dir
-    if not os.path.exists(runs_dir):
-        print(f"Make dir '{runs_dir}' !")
-        os.makedirs(runs_dir)
-    # Create Logger
-    logger = MultiLogger(log_dir=runs_dir, mode=mode, flag=config['tag'], extag=config['extag'], action=action) # backup config.yaml
+    config = _check_config(config)
+    print("------  Config  ------")
     _print_dict(config)
-    config['__INFO__']['logger'] = logger.mode
-    config['__INFO__']['Argv'] = "Argv: python " + ' '.join(sys.argv)
-    _print_dict(config['__INFO__'])
-    dump_yaml(logger, config)
+    # Create Logger
+    logger = MultiLogger(log_dir=config['base']['runs_dir'], mode=config['logger']['mode'], flag=config['base']['tag'], extag=config['base']['extag'], action=config['logger']['action']) # backup config.yaml
+    config['base']['__INFO__']['logger'] = logger.mode
+    config['base']['__INFO__']['Argv'] = "Argv: python " + ' '.join(sys.argv)
+    dump_yaml(logger, _clear_config(config), path=config['base']['runs_dir'] + "/config.yaml")
     return logger, config
 
 
+def _check_config(config):    
+    config_base = config['base']
+    config['base']['tag'] = config['base']['tag'] if ('tag' in config.keys()) and (config['base']['tag']!="") else str(datetime.now()).replace(' ', '-')
+    config['base']['extag'] = config['base']['extag'] if 'extag' in config.keys() else None
+    config['base']['__INFO__'] = {}
+    config['base']['__INFO__']['runtime'] = str(datetime.now()).replace(' ', '-')
+
+    experiment = config['base']['experiment'] if 'experiment' in config.keys() else ''
+    stage = config['base']['stage'] if 'stage' in config.keys() else ''
+
+    config['base']['runs_dir'] = os.path.join(config['base']['base_dir'], experiment, config['base']['tag'], stage)
+    if not os.path.exists(config['base']['runs_dir']):
+        print(f"Make dir '{config['base']['runs_dir']}' !")
+        os.makedirs(config['base']['runs_dir'])
+    return config
 
 
 def trans_args(parser=None):
@@ -56,21 +82,30 @@ def trans_args(parser=None):
         parser.add_argument("-c", "--config", type=str, default='./configs/config.yaml') 
     except:
         print("Already add '--config' ")
+    try: 
+        parser.add_argument("--exp", type=str, default='', help="experiment name")
+    except:
+        print("Already add '--exp' ")
     try:
-        parser.add_argument("-st", "--stage", type=str, default="")
+        parser.add_argument("-st", "--stage", type=str, default="", help="stage name for multi-stage experiment ")
     except:
         print("Already add '--stage' ")
     try:
         parser.add_argument("--test", action="store_true")
     except:
         print("Already add '--test' ")
+    try:
+        parser.add_argument("--func", type=str, default="", help=" function name for test specific funciton ")
+    except:
+        print("Already add '--func' ")
     
     args = parser.parse_args()
     return args   
 
-def trans_init(args=None, ex_config=None, mode=None, action='k', clear_none=True, **kwargs):
+
+def trans_init(args=None, ex_config=None, clear_none=True, **kwargs):
     """
-    logger, config, tag, runs_dir = trans_init(args, mode=None)
+    logger, config, tag, runs_dir = trans_init(args)
     mode: "wandb", "tb" or "tensorboard", ["wandb", "tensorboard"]
     
     action: "d": delete the directory. Note that the deletion may fail when
@@ -84,20 +119,47 @@ def trans_init(args=None, ex_config=None, mode=None, action='k', clear_none=True
                 "n" : New an new dir by time
     """
     # Load yaml config file
-    config=dict({'base_dir':'../runs_debug/',})
+    config=BASE_CONFIG
     #  --------  args.config < args < ex_config  ----------
     if args is not None: 
         with open(args.config) as f:
-            args_config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
+            file_config = yaml.load(f, Loader=yamlloader.ordereddict.CLoader)
     else:
-        args_config = {}
+        file_config = {}
     ex_config = ex_config if ex_config is not None else {}
     # Clear some vars with None or ""
-    args = vars(args)
+    arg_dict = {'base': vars(args)}
     if clear_none:
-        args        = _clear_config(args)
+        arg_dict        = _clear_config(arg_dict)
         ex_config   = _clear_config(ex_config)
+    # _print_dict(config['base'])
+    # print("\n-------------")
+    # _print_dict(file_config['base'])
+    # print("\n-------------")
+    # _print_dict(arg_dict['base'])
+    # print("\n-------------")
+    # _print_dict(ex_config)
+    # print("\n-------------")
     # Integrate all settings
-    config = {**config, **args_config, **args, **ex_config}
-    return trans_configure(config, mode=mode, action='k', **kwargs)
+    # config = {**config, **file_config, **arg_dict, **ex_config}
+    config = merge_cascade_dict([config, file_config, arg_dict, ex_config])
+    return trans_configure(config, **kwargs)
 
+
+def merge_cascade_dict(dicts):
+    num_dict = len(dicts)
+    ret_dict = {}
+    for d in dicts:
+        ret_dict = _merge_two_dict(ret_dict, d)
+    return ret_dict
+
+def _merge_two_dict(d1, d2):
+    # Use d2 to overlap d1
+    ret_dict = {**d2, **d1}
+    if isinstance(d2, dict):
+        for key, value in d2.items():
+            if isinstance(value, dict):
+                ret_dict[key] = _merge_two_dict(ret_dict[key], d2[key])
+            else:
+                ret_dict[key] = d2[key]
+    return ret_dict 

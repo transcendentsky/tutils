@@ -20,9 +20,9 @@ def save_script(runs_dir, _file_name, logger=None):
 
 
 
-def dump_yaml(logger, config, path=None, verbose=True):
+def dump_yaml(logger, config, path, verbose=True):
     # Backup existing yaml file
-    path = config['runs_dir'] + "/config.yaml" if path is None else path
+    # path = config['base']['runs_dir'] + "/config.yaml" if path is None else path
     if os.path.isfile(path):
         backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)

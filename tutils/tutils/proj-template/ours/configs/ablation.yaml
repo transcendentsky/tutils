@@ -1,13 +1,14 @@
 #
 # python ablation_trainer.py --config configs/ablation.config
 
+base:
+  base_dir: '../runs-3d/'
+  tag: 'notag'
+  runs_dir: '../runs-3d/'
+
 ablation:
   is: true
   opts: ['training:batch_size', 'training:num_workers']
-
-base_dir: '../runs-3d/'
-tag: 'notag'
-runs_dir: '../runs-3d/'
 
 dataset:
   pth: '/home1/quanquan/datasets/Head-and-Neck-challenge/data/'

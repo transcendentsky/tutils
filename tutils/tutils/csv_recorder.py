@@ -6,6 +6,7 @@ from .tutils import tfilename
 from datetime import datetime
 import os
 import csv
+import pandas as pd
 
 
 class CSVLogger(object):
@@ -42,6 +43,11 @@ class CSVLogger(object):
         with open(self.filename, "a+") as f:
             csv_writer = csv.writer(f)
             csv_writer.writerow(row)
+
+    def read_previous(self, path):
+        data = pd.read_csv(path)
+        return data
+
 
     # Not needed ! Cool !
     # def standardize(self, v):

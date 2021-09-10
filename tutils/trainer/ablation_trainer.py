@@ -86,9 +86,9 @@ class AblationTrainer(object):
     def run_train(self):
         config_list = self.build_tmp_config_file()
         for i, config in enumerate(config_list):
-            dump_yaml(self.logger, config, path="_tmp_config.yaml")
+            dump_yaml(self.logger, config, path="tmp/_tmp_config.yaml")
             tag = self.ablation_config['tag'] + "/" + self.ablation_config['ablation']['tag'] + f"_try{i}"
-            cmd = f"CUDA_VISIBLE_DEVICES={self.gpus} python {self.script_file} --tag {tag} --config {'_tmp_config.yaml'}"
+            cmd = f"CUDA_VISIBLE_DEVICES={self.gpus} python {self.script_file} --tag {tag} --config {'tmp/_tmp_config.yaml'}"
             self.logger.info(f"Run cmd: {cmd}")
             ret_value = subprocess.call(cmd, shell=True)
             self.logger.info(f"ret value: {ret_value}")
@@ -96,9 +96,9 @@ class AblationTrainer(object):
     def run_test(self):
         config_list = self.build_tmp_config_file()
         for i, config in enumerate(config_list):
-            dump_yaml(self.logger, config, path="_tmp_config.yaml")
+            dump_yaml(self.logger, config, path="tmp/_tmp_config.yaml")
             tag = self.ablation_config['tag'] + "/" + self.ablation_config['ablation']['tag'] + f"_try{i}"
-            cmd = f"CUDA_VISIBLE_DEVICES={self.gpus} python {self.script_file} --tag {tag} --config {'_tmp_config.yaml'} --test"
+            cmd = f"CUDA_VISIBLE_DEVICES={self.gpus} python {self.script_file} --tag {tag} --config {'tmp/_tmp_config.yaml'} --test"
             self.logger.info(f"Run cmd: {cmd}")
             ret_value = subprocess.call(cmd, shell=True)
             self.logger.info(f"ret value: {ret_value}")
@@ -112,7 +112,6 @@ class AblationTrainer(object):
             self.logger.info(f"Run cmd: {cmd}")
             ret_value = subprocess.call(cmd, shell=True)
             self.logger.info(f"ret value: {ret_value}")
-
 
 
 def template(_file_name):

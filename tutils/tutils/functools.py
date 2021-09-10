@@ -36,13 +36,16 @@ def _clear_config(config):
     return config
 
 
-def _print_dict(_dict):
+def _print_dict(_dict, layer=0):
     if isinstance(_dict, (dict, OrderedDict)):
         for key, value in _dict.items():
-            print(key, end=": ")
-            _print_dict(value)
+            if isinstance(value, (dict, OrderedDict)):
+                print("    "*layer, key, end=":\n")
+                _print_dict(value, layer+1)
+            else:
+                print("    "*layer, f"{key}: {value}")
     else:
-        print(_dict)
+        print("    "*layer, _dict)
 
 
 # def time_now():

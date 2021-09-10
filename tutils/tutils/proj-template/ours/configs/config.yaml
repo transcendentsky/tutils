@@ -1,7 +1,12 @@
 ### NOTE: config in ./code/configs/config.yaml
+# runs_dir: base_dir/experiment/tag/stage
+base:
+  base_dir: '../runs-3d/'  # [*]
+  experiment: ''
+  tag: ''
+  prestage: ''
+  stage: ''
 
-base_dir: '../runs-3d/'  # [*]
-tag: 'notag'
 runs_dir: '../runs-3d/'
 
 dataset:

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="tutils",
-    version="1.1.0",
+    version="1.2.0",
     author="Curliq",
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(exclude=['test.*']),
@@ -12,7 +12,6 @@ setup(
       'termcolor',
       'einops',
       'torch>=1.6',
-      # 'kornia>=0.4.0',
       'torchvision',
       'seaborn',
       'matplotlib',
@@ -21,8 +20,9 @@ setup(
       'pyyaml',
       'yamlloader',
       'SimpleITK',
-      # 'piq',
-      # 'pyradiomics',
+      # 'piq', # for ssim_loss
+      # 'pyradiomics', # for radiomics
+      # 'kornia>=0.4.0', 
   ],
   entry_points={
     'console_scripts': [

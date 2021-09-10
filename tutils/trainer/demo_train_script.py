@@ -1,4 +1,11 @@
 
+
+class MainProcess(object):
+    def __init__(self, logger, config):
+        self.logger = logger
+        self.config = config
+
+
 def train(logger, config, args):
     pass
     # Learner
@@ -22,11 +29,20 @@ def test(logger, config, args):
 if __name__ == '__main__':
     from tutils import trans_args, trans_init
     import os
+    import argparse
 
-    args = trans_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ref", type=int, default=1)
+    parser.add_argument("--func", type=str, default="")
+    args = trans_args(parser)
     print(args)
     logger, config = trans_init(args)
-    if args.test:
-        test(logger, config, args)
-    else:
-        train(logger, config, args)
+    
+    mainprocess = MainProcess(logger, config)
+    funcname = args.func # or funcname = config['func']
+    getattr(mainprocess, funcname)()
+
+    # if args.test:
+    #     test(logger, config, args)
+    # else:
+    #     train(logger, config, args)

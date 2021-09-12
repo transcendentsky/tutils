@@ -1,6 +1,0 @@
-[32m[0822 05:34:13 @tlogger.py:282][0m [1m[36mINFO[0m Argv: demo_train_script.py --tag abla1/ablation_test_iter_1 --config _tmp_config.yaml
-[32m[0822 05:34:13 @tlogger.py:155][0m [1m[36mINFO[0m Saved config.yaml to ./debug_runs/abla1/ablation_test_iter_1/config.yaml
-[32m[0822 05:34:13 @demo_train_script.py:9][0m [1m[36mINFO[0m code test for demo_train_script.py
-[32m[0822 05:34:13 @demo_train_script.py:11][0m [1m[36mINFO[0m /home1/quanquan/code/tutils
-[32m[0822 05:34:13 @demo_train_script.py:12][0m [1m[36mINFO[0m ./debug_runs/abla1/ablation_test_iter_1
-[32m[0822 05:34:13 @demo_train_script.py:13][0m [1m[36mINFO[0m ./debug_runs/

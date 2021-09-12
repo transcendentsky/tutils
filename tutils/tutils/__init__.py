@@ -5,3 +5,4 @@ from .ttimer import *
 from .tlogger import *
 from .techo import *
 from .initializer import *
+from .functools import print_dict

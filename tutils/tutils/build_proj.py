@@ -37,9 +37,16 @@ def build_project_v0():
 
 def build_project_v1():
     current_dir = os.path.dirname(__file__)
-    shutil.copy(current_dir + "/code", "./code")
-    shutil.copy(current_dir + "/data", "./data")
-    shutil.copy(current_dir + "/runs", "./runs")
+    for _dir in os.scandir(current_dir + "/../proj-template/"):
+        if not os.path.exists(_dir.path):
+            if os.path.isdir(_dir.path):
+                shutil.copytree(_dir.path, f"./{_dir.name}")
+            else:
+                shutil.copy(_dir.path,  f"./{_dir.name}")
+        # shutil.copytree(current_dir + "/proj-template/", f"./")
+
+    # shutil.copy(current_dir + "/data", "./data")
+    # shutil.copy(current_dir + "/runs", "./runs")
 
 
 def main():

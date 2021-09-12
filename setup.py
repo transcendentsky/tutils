@@ -7,7 +7,7 @@ setup(
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(exclude=['test.*']),
     package_data={'tutils': ['*/config.yaml', '*/.gitignore', '*/NOTES.md', '*/ttest.csv'],
-                  'proj': ['*/proj-template/*', '*/proj-template/code/configs/config.yaml', ]},
+                  'proj-template': ['*/code/configs/ablation.yaml', '*/code/configs/config.yaml', '*/code/.gitignore']},
     install_requires=[
       'termcolor',
       'einops',

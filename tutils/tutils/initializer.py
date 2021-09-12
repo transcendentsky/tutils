@@ -40,8 +40,9 @@ BASE_CONFIG = {
 def trans_configure(config=BASE_CONFIG, **kwargs):
     # -------------  Initialize  -----------------
     config = _check_config(config)
-    print("------  Config  ------")
-    _print_dict(config)
+    # if verbose:
+    #     print("------  Config  ------")
+    #     _print_dict(config['base'])
     # Create Logger
     logger = MultiLogger(log_dir=config['base']['runs_dir'], mode=config['logger']['mode'], flag=config['base']['tag'], extag=config['base']['extag'], action=config['logger']['action']) # backup config.yaml
     config['base']['__INFO__']['logger'] = logger.mode
@@ -52,13 +53,13 @@ def trans_configure(config=BASE_CONFIG, **kwargs):
 
 def _check_config(config):    
     config_base = config['base']
-    config['base']['tag'] = config['base']['tag'] if ('tag' in config.keys()) and (config['base']['tag']!="") else str(datetime.now()).replace(' ', '-')
-    config['base']['extag'] = config['base']['extag'] if 'extag' in config.keys() else None
+    config['base']['tag'] = config['base']['tag'] if ('tag' in config['base'].keys()) and (config['base']['tag']!="") else str(datetime.now()).replace(' ', '-')
+    config['base']['extag'] = config['base']['extag'] if 'extag' in config['base'].keys() else None
     config['base']['__INFO__'] = {}
     config['base']['__INFO__']['runtime'] = str(datetime.now()).replace(' ', '-')
 
-    experiment = config['base']['experiment'] if 'experiment' in config.keys() else ''
-    stage = config['base']['stage'] if 'stage' in config.keys() else ''
+    experiment = config['base']['experiment'] if 'experiment' in config['base'].keys() else ''
+    stage = config['base']['stage'] if 'stage' in config['base'].keys() else ''
 
     config['base']['runs_dir'] = os.path.join(config['base']['base_dir'], experiment, config['base']['tag'], stage)
     if not os.path.exists(config['base']['runs_dir']):
@@ -130,18 +131,9 @@ def trans_init(args=None, ex_config=None, clear_none=True, **kwargs):
     # Clear some vars with None or ""
     arg_dict = {'base': vars(args)}
     if clear_none:
-        arg_dict        = _clear_config(arg_dict)
+        arg_dict    = _clear_config(arg_dict)
         ex_config   = _clear_config(ex_config)
-    # _print_dict(config['base'])
-    # print("\n-------------")
-    # _print_dict(file_config['base'])
-    # print("\n-------------")
-    # _print_dict(arg_dict['base'])
-    # print("\n-------------")
-    # _print_dict(ex_config)
-    # print("\n-------------")
-    # Integrate all settings
-    # config = {**config, **file_config, **arg_dict, **ex_config}
+
     config = merge_cascade_dict([config, file_config, arg_dict, ex_config])
     return trans_configure(config, **kwargs)
 
@@ -151,6 +143,8 @@ def merge_cascade_dict(dicts):
     ret_dict = {}
     for d in dicts:
         ret_dict = _merge_two_dict(ret_dict, d)
+        # print("debug: ")
+        # _print_dict(ret_dict['base'])
     return ret_dict
 
 def _merge_two_dict(d1, d2):

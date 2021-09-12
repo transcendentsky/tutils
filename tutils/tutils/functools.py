@@ -36,6 +36,10 @@ def _clear_config(config):
     return config
 
 
+def print_dict(config):
+    _print_dict(config)
+
+
 def _print_dict(_dict, layer=0):
     if isinstance(_dict, (dict, OrderedDict)):
         for key, value in _dict.items():

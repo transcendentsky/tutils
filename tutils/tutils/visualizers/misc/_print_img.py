@@ -14,7 +14,7 @@ import torchvision
 #     assert np.ndim(img) <= 3
 #     img = reprocess_auto(img, img_type=img_type)
 #     print_img_np(img, img_type, fname=fname)
-def torchvision_save(tensor:torch.Tensor, fname):
+def torchvision_save(tensor:torch.Tensor, fname) -> None:
     """
     Recommended: 
     tensor: [b, 3, m,n], multiple images be saved in one file.

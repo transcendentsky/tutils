@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # matplotlib.use('agg')
 
 
-def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
+def draw_heatmap(points: np.ndarray, points2, fname="./tmp/heatmap.png"):
     # print(count1, count2) # 68 88
     # points = np.reshape(points, (count1, count2))
     plt.rc('font', family='Times New Roman')
@@ -27,7 +27,7 @@ def draw_heatmap(points: np.ndarray, points2, fname="testtt.png"):
     plt.close()
 
 
-def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None, xlabel="x", ylabel="y"):
+def draw_scatter(points, points2, fname="./tmp/scatter.png", c="red", set_font=None, xlabel="x", ylabel="y"):
     plt.ioff()  # Turn off interactive plotting off
     if set_font is not None:
         plt.rc('font', family='Times New Roman')
@@ -43,6 +43,8 @@ def draw_scatter(points, points2, fname="ttest.png", c="red", set_font=None, xla
     plt.close()
 
 
+# ----------------------------------------------------------------
+# for debug
 def draw_scripts():
     from numpy import random
     R = random.randn(11, 11)

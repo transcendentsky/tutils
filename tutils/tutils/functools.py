@@ -52,6 +52,29 @@ def _print_dict(_dict, layer=0):
         print("    "*layer, _dict)
 
 
+def flatten_dict(d, parent_name=None):
+    """
+    flatten dict: 
+    config={
+        'base':
+            'experiment': 'test',
+    }
+        ==> 
+    config={
+        'base.experiment': 'test',
+    }
+    """
+    s = parent_name + "." if parent_name is not None else ""
+    if isinstance(d, dict):
+        _d = dict()
+        for k, v in d.items():
+            if not isinstance(v, dict):
+                _d = {**_d, **{s+k: v}}
+            else:
+                _d = {**_d, **flatten_dict(d[k], s + k)}
+        return _d
+
+
 # def time_now():
 #     return time.strftime("%Y%m%d-%H%M%S", time.localtime())
 

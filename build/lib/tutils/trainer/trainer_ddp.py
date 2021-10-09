@@ -1,5 +1,9 @@
 # coding: utf-8
-from .learner import LearnerModule
+"""
+    Borrow some code and minds from:
+        https://github.com/facebookresearch/barlowtwins
+
+"""
 import torch
 import numpy as np
 from torch import nn
@@ -9,33 +13,26 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 # trans utils
 from tutils.tutils.ttimer import tenum, timer
-from tutils.tutils import tfilename, CSVLogger
+from tutils.tutils import tfilename, CSVLogger, MultiLogger
 from torch.cuda.amp import autocast, GradScaler
-from .recorder import Recorder
+from tutils.trainer.learner import LearnerModule
+from tutils.trainer.recorder import Recorder
 from tqdm import tqdm
 from datetime import datetime
+import os
+import signal
+import subprocess
+import sys
 
 
-class Trainer(object):
-    def __init__(self, 
-                logger=None, 
-                config=None, 
-                mode="ps", 
-                runs_dir=None, 
-                tag=None,
-                num_epochs=1200, 
-                batch_size=4, 
-                num_workers=4, 
-                save_interval=50, 
-                use_amp=False, 
-                val_check_interval=100,
-                tester=None, 
-                monitor=None, 
-                save_latest_only=False, 
-                training_log_interval=1,         # training log every n epochs
-                gpus=4, 
-                sync_batchnorm=True, 
-                **kwargs):
+class DDPTrainer(object):
+    def __init__(self,
+                 logger=None,
+                 config=None,
+                 mode="ddp",
+                 tester=None,
+                 monitor=None,
+                 ):
         """
             mode:
                 ps:  Parameter Server
@@ -43,79 +40,113 @@ class Trainer(object):
         """
         assert mode in ['ps', "ddp"]
         self.mode = mode
-        if mode == "ddp": raise NotImplementedError #self.init_ddp_env()
-        else: self.device = torch.device("cuda")
-        self.init_timers()
-        # Config
         self.config = config
-        self.tag = tag # config['tag']
-        self.runs_dir = runs_dir # config['runs_dir']
-        self.max_epochs = num_epochs # config['training']['num_epochs']
-        self.batch_size = batch_size # config["training"]['batch_size']
-        self.num_workers = num_workers # config['training']['num_workers']
-        self.save_interval = save_interval # config['training']['save_interval']
-        self.use_amp = use_amp # config['training']['use_amp']
-        self.val_check_interval = val_check_interval # config['validation']['val_check_interval']
-        self.save_latest_only = save_latest_only
-        self.training_log_interval = training_log_interval
-        if self.use_amp:
-            self.logger.info("[*] You are using AMP accelaration. ")
-
-        # Other
-        self.recorder = Recorder()
-        self.recorder_test = Recorder()
-        self.logger = logger
-        self.csvlogger = CSVLogger(tfilename(runs_dir, "best_record"))
-
-        self.monitor = monitor
         self.tester = tester
-        self.model = None
+        self.monitor = monitor
+        self.gpus = config['training'].get('gpus', '0,1,2,3,4,5,6,7')
+        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpus
+        assert self.gpus == "1,7"
+        print("[*] GPUs: ", self.gpus)
+        self.world_size = torch.cuda.device_count()
+
+    def fit(self, model, trainset, valset=None, **kwargs):
+        return self.init_ddp(model, trainset, **kwargs)
+
+    def init_ddp(self, model, trainset, **kwargs):
+        torch.multiprocessing.spawn(start_ddp_worker,
+                                    (self.world_size, self.config, model, trainset, self.tester, self.monitor),
+                                    nprocs=self.world_size,
+                                    join=True, )
+
+
+def start_ddp_worker(rank, world_size, config, model, trainset, tester, monitor):
+    print("Start DDP worker: rank ", rank, world_size)
+    worker = DDPWorker(config=config,
+                       rank=rank,
+                       world_size=world_size,
+                       tester=tester,
+                       monitor=monitor)
+    worker.fit(model, trainset)
+    pass
+
+
+class DDPWorker(object):
+    def __init__(self, config,
+                 rank,
+                 world_size,
+                 tester,
+                 monitor):
+        self.config = config
+        self.rank = rank
+        self.world_size = world_size
+        self.tester = tester
+
+        self.gpus = config['training'].get('gpus', '0,1,2,3,4,5,6,7')
+        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpus
+        assert self.gpus == "1,7"
+        print("[*] GPUs: ", self.gpus)
+
+        self.tag = config['base']['tag']
+        self.runs_dir = config['base']['runs_dir']
+        self.max_epochs = config['training'].get('num_epochs', 400)
+        self.batch_size = config["training"]['batch_size']
+        self.num_workers = config['training']['num_workers']
+        self.save_interval = config['training']['save_interval']
+
+        self.val_check_interval = config['training'].get('val_check_interval', 50)
+        self.training_log_interval = config['training'].get('training_log_interval', 1)
+        self.use_amp = config['training'].get('use_amp', False)
+        self.save_latest_only = config['training'].get('save_latest_only', False)
+
+        self.init_timers()
+
+        # Logging, in GPU 0
+        if self.rank == 0:
+            print("")
+            self.recorder = Recorder()
+            self.recorder_test = Recorder()
+            self.logger = None
+            self.csvlogger = CSVLogger(tfilename(self.runs_dir, "best_record"))
+            self.monitor = monitor
+            self.tester = tester
+
         self.optimizer = None
         self.scheduler = None
-        self.scaler = None  # initialize in "init_ps"
+
+        self.ddp_config = config['training'].get('ddp', dict())
+        self.master_addr = self.ddp_config.get('master_addr', 'localhost')
+        self.master_port = str(self.ddp_config.get('master_port', '25700'))
+        self.batch_size = config['training'].get('batch_size', 4)
+        self.num_worker = config['training'].get('num_worker', 2)
+        self.world_size = torch.cuda.device_count()
+        self.dist_url = 'tcp://' + self.master_addr + ":" + self.master_port
+
+        torch.distributed.init_process_group(backend="nccl", init_method=self.dist_url,
+            world_size=self.world_size, rank=self.rank)
+
+        self.scaler = GradScaler() if self.use_amp else None
 
     def init_timers(self):
-        self.timer_epoch = timer("one epoch")
-        self.timer_data  = timer("data time")
-        self.timer_net   = timer("net forwarding")
-        self.timer_eval  = timer("evaluation")
-        self.timer_write = timer("writing files")
+        self.timer_epoch = timer("one epoch") if self.rank == 0 else VoidTimer()
+        self.timer_data = timer("data time") if self.rank == 0 else VoidTimer()
+        self.timer_net = timer("net forwarding") if self.rank == 0 else VoidTimer()
+        self.timer_eval = timer("evaluation") if self.rank == 0 else VoidTimer()
+        self.timer_write = timer("writing files") if self.rank == 0 else VoidTimer()
 
-    def init_model(self, model, trainset, valset=None):
-        if self.mode == "ddp":
-            raise NotImplementedError("to Device is not Implemented")
-            # return self.init_ddp(model, trainset, valset)
-        elif self.mode == "ps":
-            return self.init_ps(model, trainset, valset)
-        else:
-            raise NotImplementedError(f"mode={self.mode}")
+    def fit(self, model, trainset):
+        if self.rank == 0:
+            self.logger = model.configure_logger()['logger']
 
-    def init_ps(self, model, trainset, valset):
-        assert len(trainset) > 0 , f"Got {len(trainset)}"
-        trainloader = DataLoader(dataset=trainset,
-                                 batch_size=self.batch_size,num_workers=self.num_workers, shuffle=True, drop_last=True)
-        if valset is not None:
-            assert len(valset) > 0 , f"Got {len(valset)}"
-            valloader = DataLoader(dataset=valset,
-                                 batch_size=1, num_workers=1)
-        else:
-            valloader = None
+        model.net = model.net.to(self.rank)
+        model.net = nn.SyncBatchNorm.convert_sync_batchnorm(model.net)
+        model.net = torch.nn.parallel.DistributedDataParallel(model.net, device_ids=[self.rank])
 
-        model.net = torch.nn.DataParallel(model.net)
-        model.load()
-        model.cuda()
-
-        if self.use_amp:
-            self.scaler = GradScaler()
-            self.logger.info("--------------------------\n "
-                             "      [*] Using AMP !\n"
-                             " -------------------------")
-
-        return model, trainloader, valloader
-
-    def fit(self, model, trainset, valset=None,  trainloader=None, valloader=None, testloader=None):
-        assert isinstance(model, LearnerModule)
-        model, trainloader, valloader = self.init_model(model, trainset)
+        sampler = torch.utils.data.distributed.DistributedSampler(trainset, shuffle=True)
+        assert self.batch_size % self.world_size == 0
+        per_device_batch_size = self.batch_size // self.world_size
+        self.trainloader = torch.utils.data.DataLoader(
+            trainset, batch_size=per_device_batch_size, num_workers=self.num_worker,
+            pin_memory=True, sampler=sampler, drop_last=True)
 
         # Set optimizer and scheduler
         optim_configs = model.configure_optimizers()
@@ -125,24 +156,24 @@ class Trainer(object):
         for epoch in range(self.max_epochs):
             self.on_before_zero_grad()
             # Training
-            self.train(model, trainloader, epoch, optimizer, scheduler)
+            self.train(model, self.trainloader, epoch, optimizer, scheduler)
             # Evaluation
-            if epoch % self.val_check_interval == 0:
-                if valset is not None:
-                    self.validate(model, valset, epoch)
+            if epoch % self.val_check_interval == 0 and self.rank == 0:
                 if self.tester is not None:
-                    out = self.tester.test(model, epoch)
+                    out = self.tester.test(model, epoch, self.rank)
                     if self.monitor is not None:
                         best_dict = self.monitor.record(out, epoch)
                         self.recorder_test.record({**best_dict, **out})
                         if best_dict['isbest']:
-                            self.save_best_model(model, epoch)
-                            self.csvlogger.record({**best_dict, **out, "time":_get_time_str()})
+                            self.save(model, epoch, type='best')
+                            self.csvlogger.record({**best_dict, **out, "time": _get_time_str()})
                         self.logger.info(f"\n[*] {dict_to_str(best_dict)}[*] Epoch {epoch}: \n{dict_to_str(out)}")
                         self.logger.add_scalars(out, step=epoch, tag='test')
                     else:
                         self.logger.info(f"\n[*] Epoch {epoch}: {dict_to_str(out)}")
-            self.autosave(model, epoch)
+                self.save(model, epoch)
+        print("Training is Over for GPU rank ", self.rank)
+        self.cleanup()
 
     def on_before_zero_grad(self, **kwargs):
         pass
@@ -150,17 +181,19 @@ class Trainer(object):
     def train(self, model, trainloader, epoch, optimizer, scheduler=None):
         model.train()
         do_training_log = (epoch % self.training_log_interval == 0)
-        
-        self.recorder.clear()
-        time_record = 0.1111
-        self.timer_epoch()
+
+        if do_training_log and self.rank == 0:
+            self.recorder.clear()
+            time_record = 0.1111
+            self.timer_epoch()
+
         for load_time, batch_idx, data in tqdm(tenum(trainloader), ncols=100):
             model.on_before_zero_grad()
             optimizer.zero_grad()
             self.timer_data()
             for k, v in data.items():
                 if type(v) == torch.Tensor:
-                    data[k] = v.cuda()
+                    data[k] = v.to(self.rank)
             time_data_cuda = self.timer_data()
             if self.use_amp:
                 with autocast():
@@ -172,7 +205,7 @@ class Trainer(object):
                     self.scaler.step(optimizer)
                     self.scaler.update()
                     time_bp = self.timer_net()
-            else:                
+            else:
                 self.timer_net()
                 out = model.training_step(data, batch_idx)
                 time_fd = self.timer_net()
@@ -181,28 +214,25 @@ class Trainer(object):
                 optimizer.step()
                 time_bp = self.timer_net()
 
-            out['time_load'] = load_time
-            out['time_cuda'] = time_data_cuda
-            out['time_forward'] = time_fd
-            out['time_bp'] = time_bp
-            out['time_record'] = time_record
+            if do_training_log and self.rank == 0:
+                out['time_load'] = load_time
+                out['time_cuda'] = time_data_cuda
+                out['time_forward'] = time_fd
+                out['time_bp'] = time_bp
+                out['time_record'] = time_record
 
-            if do_training_log:
                 self.timer_data()
                 self.recorder.record(out)
                 time_record = self.timer_data()
 
             if epoch == 0:
-                self.logger.info("[*] Debug Checking Pipeline !!!")
+                if self.rank == 0:
+                    self.logger.info("[*] Debug Checking Pipeline !!!")
                 break
-            
-        if scheduler is not None:
-            lr = scheduler.get_lr()[0]
-            scheduler.step()
-        else:
-            lr = optimizer.param_groups[0]['lr']
 
-        if do_training_log:
+        lr = optimizer.param_groups[0]['lr']
+
+        if do_training_log and self.rank == 0:
             _dict = self.recorder.cal_metrics()
             _dict['time_total'] = self.timer_epoch()
             _dict['lr'] = lr
@@ -211,133 +241,144 @@ class Trainer(object):
             loss_str = ""
             for k, v in _dict.items():
                 loss_str += "{}:{:.3f} ".format(k, v)
-            self.logger.info(f"Epoch {epoch}: {loss_str}")            
+            self.logger.info(f"Epoch {epoch}: {loss_str}")
             self.logger.add_scalars(_dict, step=epoch, tag='train')
-        
 
-    def validate(self, model, valloader, epoch):
-        model.eval()
-        with torch.no_grad():
-            self.recorder.clear()
-            for load_time, batch_idx, data in tenum(valloader):
-                self.timer_eval()
-                for k, v in data.items():
-                    if type(v) == torch.Tensor:
-                        data[k] = v.cuda()
-                out = model.validation_step(data, batch_idx)
-                time_eval = self.timer_eval()
-                out['load_time'] = load_time
-                out['time_eval'] = time_eval
-                self.recorder.record(out)
+    def save(self, model, epoch, type=None):
+        if self.rank != 0:
+            return
+        if type is None:
+            if self.save_interval > 0 and epoch % self.save_interval == 0:
+                save_name = "/ckpt/model_epoch_{}.pth".format(epoch)
+                model.save(tfilename(self.runs_dir, save_name), epoch=epoch)
+                self.logger.info(f"Epoch {epoch}: Save model to ``{save_name}``! ")
+        elif type == 'latest':
+            save_name = "/ckpt/model_latest.pth"
+            if self.save_interval > 0 and epoch % self.save_interval == 0:
+                if self.save_latest_only:
+                    model.save(tfilename(self.runs_dir, save_name), epoch=epoch, is_latest=True)
+                    self.logger.info(f"Epoch {epoch}: Save model to ``{save_name}``! ")
+        elif type == 'best':
+            save_name = "/ckpt/best_model_epoch_{}.pth".format(epoch)
+            model.save(tfilename(self.runs_dir, save_name), epoch=epoch, is_best=True)
+            self.logger.info(f"[Best model] Epoch {epoch}: Save model to ``{save_name}``! ")
 
-        _dict = self.recorder.cal_metrics()
-        loss_str = ""
-        for k, v in _dict.items():
-            loss_str += "{}:{:.3f} ".format(k, v) # f"{v}:{loss_values[i]}; "
-        self.logger.info(f"\n\tValidation step, Epoch {epoch}: {loss_str}")            
-        self.logger.add_scalars(_dict, step=epoch, tag='val')
-        return loss_values
+    def cleanup(self):
+        torch.distributed.destroy_process_group()
 
-    def _init_test(self, model):
-        model.net = torch.nn.DataParallel(model.net)
-        model.load()
-        model.cuda()
-        return model
 
-    def test(self, model):
-        # """
-        #     Use Tester.test instead
-        # """
-        # raise NotImplementedError
-        model = self._init_test(model)
-        assert self.tester is not None, "No Tester !!!"
-        out = self.tester.test(model, 0)
-        self.csvlogger.record({**out, "time":_get_time_str()})
-        self.logger.info(f"\n[*] Results: \n{dict_to_str(out)}")
-        
+class VoidTimer(object):
+    def __init__(self, *args):
+        pass
 
-    def autosave(self, model, epoch):
-        if self.save_interval > 0 and epoch % self.save_interval == 0:
-            if self.save_latest_only:
-                return self.save_latest(model, epoch)
-            return self.save(model, epoch)
+    def __call__(self, *args, **kwargs):
+        return None
 
-    def save_latest(self, model, epoch):        
-        model.save(tfilename(self.runs_dir + "/ckpt/model_latest.pth"), epoch=epoch, is_latest=True)
-        self.logger.info(f"Epoch {epoch}: Just Saved model to ``{self.runs_dir + '/ckpt/model_latest.pth'}``! ")
+# def handle_sigusr1(signum, frame):
+#     os.system(f'scontrol requeue {os.getenv("SLURM_JOB_ID")}')
+#     exit()
+#
+#
+# def handle_sigterm(signum, frame):
+#     pass
 
-    def save(self, model, epoch):
-        model.save(tfilename(self.runs_dir + "/ckpt/model_epoch_{}.pth".format(epoch)), epoch=epoch)
-        self.logger.info(f"Epoch {epoch}: Just Saved model to ``{self.runs_dir + '/ckpt/model_epoch_{}.pth'.format(epoch)}``! ")
-
-    def save_best_model(self, model, epoch):        
-        model.save(tfilename(self.runs_dir + "/ckpt/best_model_epoch_{}.pth".format(epoch)), epoch=epoch, is_best=True)
-        self.logger.info(f"[Best model] Epoch {epoch}: Saved best model to ``{self.runs_dir + '/ckpt/model_epoch_{}.pth'.format(epoch)}``! ")
-
-    # def init_ddp_env(self):
-    #     # 1 Initialize
-    #     torch.distributed.init_process_group(backend="nccl")
-    #     # 2 set up gpu for each process
-    #     self.local_rank = torch.distributed.get_rank()
-    #     torch.cuda.set_device(self.local_rank)
-    #     self.device = torch.device("cuda", self.local_rank)
-    #     print("debug: ", self.local_rank, self.device)
-    #
-    # def init_ddp(self, model, trainset, valset):
-    #     # 3 Use DistributedSampler
-    #     trainloader = DataLoader(dataset=trainset,
-    #                              batch_size=self.batch_size,
-    #                              sampler=DistributedSampler(trainset), shuffle=True, drop_last=True)
-    #     # 4 move the network to the predetermined gpu
-    #     model.to(self.device)
-    #     if torch.cuda.device_count() > 1:
-    #         print("Let's use", torch.cuda.device_count(), "GPUs!")
-    #         # 5) pack up with DistributedDataParallel
-    #         model = torch.nn.parallel.DistributedDataParallel(model,
-    #                                                           device_ids=[self.local_rank],
-    #                                                           output_device=self.local_rank)
-    #     return model, trainloader
-    #
-    # def cleanup(self):
-    #     torch.distributed.destroy_process_group()
 
 def dict_to_str(d):
     loss_str = ""
     for k, v in d.items():
-        loss_str += "\t {}\t: {} \n".format(k, v) # f"{v}:{loss_values[i]}; "
+        loss_str += "\t {}\t: {} \n".format(k, v)  # f"{v}:{loss_values[i]}; "
     return loss_str
+
 
 def _get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 
 
+
+
 if __name__ == '__main__':
+    from tutils import load_yaml, trans_args, trans_init, print_dict
+    from tutils.trainer import Monitor
+    import argparse
     # ------------  For debug  --------------
+
+    
+    class ToyModel(nn.Module):
+        def __init__(self):
+            super(ToyModel, self).__init__()
+            self.net1 = nn.Linear(10, 10)
+            self.relu = nn.ReLU()
+            self.net2 = nn.Linear(10, 5)
+
+        def forward(self, x):
+            return self.net2(self.relu(self.net1(x)))
+
+
+    class Learner(LearnerModule):
+        def __init__(self, config, logger=None):
+            super(Learner, self).__init__(config)
+            self.config = config
+            self.net = ToyModel()
+            self.loss_fn = nn.MSELoss()
+
+        def forward(self, x):
+            return self.net(x)
+
+        def training_step(self, data, batch_idx, **kwargs):
+            imgs, labels = data['imgs'], data['labels']
+            outputs = self.forward(imgs) # torch.randn(20, 10)
+            loss = self.loss_fn(outputs, labels)
+            return {'loss':loss}
+
+        def configure_optimizers(self, **kwargs):
+            optimizer = torch.optim.SGD(self.net.parameters(), lr=0.001)
+            scheduler = None
+            return {'optimizer': optimizer, "scheduler": scheduler}
+
+        def configure_logger(self):
+            logger = MultiLogger(logdir=self.config['base']['runs_dir'],
+                                mode=self.config['logger']['mode'],
+                                tag=self.config['base']['tag'],
+                                extag=self.config['base'].get('extag', None),
+                                action=self.config['logger'].get('action', 'k'))
+            return {'logger': logger}
+
     class RandomDataset(Dataset):
         """ Just For Testing"""
-        def __init__(self, size, length):
-            self.len = length
-            self.data = torch.randn(length, size).to('cuda')
+
+        def __init__(self, emb, datalen):
+            self.len = datalen
+            self.data = torch.randn(datalen, emb)
+            self.label = torch.randn(datalen, 5)
 
         def __getitem__(self, index):
-            return self.data[index]
+            return {"imgs": self.data[index], "labels": self.label[index]}
 
         def __len__(self):
             return self.len
 
+    class Tester(object):
+        def __init__(self):
+            pass
 
-    class Model(nn.Module):
-        def __init__(self, input_size, output_size):
-            super(Model, self).__init__()
-            self.fc = nn.Linear(input_size, output_size)
+        def test(self, model, epoch, rank, **kwargs):
+            sample = torch.randn(10, 10).to(rank)
+            output = model(sample)
+            # metric
+            return {"rrres": float(epoch), "loss":0.2}
 
-        def forward(self, input):
-            output = self.fc(input)
-            print("  In Model: input size", input.size(),
-                  "output size", output.size())
-            return output
 
-    model = Model(5, 2)
-    dataset = RandomDataset(5, 90)
-    trainer = Trainer(config={"training":{"batch_size":256, "num_epochs":500}})
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', default="./configs/config.yaml")
+    args = trans_args(parser)
+    logger, config = trans_init(args)
+    print_dict(config)
+
+    monitor = Monitor(key='rrres', mode='inc')
+    tester = Tester()
+    # import ipdb; ipdb.set_trace()
+    # model = ToyModel()
+    model = Learner(config)
+    dataset = RandomDataset(10, 100)
+    trainer = DDPTrainer(logger, config, tester=tester, monitor=monitor)
     trainer.fit(model, dataset)

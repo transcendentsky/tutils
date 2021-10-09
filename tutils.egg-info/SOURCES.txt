@@ -64,6 +64,9 @@ tutils/proj-template/related_work_1/__init__.py
 tutils/proj-template/related_work_1/work1/__init__.py
 tutils/proj-template/runs/__init__.py
 tutils/trainer/__init__.py
+tutils/trainer/_bad_tuner_exec.py
+tutils/trainer/ablation_exec.py
+tutils/trainer/ablation_search.py
 tutils/trainer/ablation_trainer.py
 tutils/trainer/demo_ablation_trainer.py
 tutils/trainer/demo_learner_trainer.py
@@ -76,12 +79,14 @@ tutils/trainer/save.py
 tutils/trainer/simple_script_helper.py
 tutils/trainer/trainer.py
 tutils/trainer/trainer_ddp.py
+tutils/trainer/tuner_exec.py
 tutils/tutils/NOTES.md
 tutils/tutils/__init__.py
 tutils/tutils/build_proj.py
 tutils/tutils/csv_recorder.py
 tutils/tutils/dl_utils.py
 tutils/tutils/functools.py
+tutils/tutils/grad_cam.py
 tutils/tutils/initializer.py
 tutils/tutils/recorder.py
 tutils/tutils/techo.py

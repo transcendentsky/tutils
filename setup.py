@@ -27,6 +27,7 @@ setup(
   entry_points={
     'console_scripts': [
       'trans_build = tutils.tutils.build_proj:main',
+      'abla_train = tutils.trainer.ablation_exec:execute'
     ],
   },
 )

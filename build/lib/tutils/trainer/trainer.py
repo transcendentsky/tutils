@@ -41,8 +41,13 @@ class Trainer(object):
                 ps:  Parameter Server
                 ddp: Distributed data parallel
         """
-        assert mode in ['ps', "ddp"]
+        assert mode in ['ps', 'ddp', 'autotune']
         self.mode = mode
+        if mode == 'autotune': 
+            try:
+                from ray import tune
+            except:
+                raise EnvironmentError
         if mode == "ddp": raise NotImplementedError #self.init_ddp_env()
         else: self.device = torch.device("cuda")
         self.init_timers()
@@ -64,7 +69,7 @@ class Trainer(object):
         # Other
         self.recorder = Recorder()
         self.recorder_test = Recorder()
-        self.logger = logger
+        self.logger = logger if logger is not None else FakeLogger()
         self.csvlogger = CSVLogger(tfilename(runs_dir, "best_record"))
 
         self.monitor = monitor
@@ -113,7 +118,7 @@ class Trainer(object):
 
         return model, trainloader, valloader
 
-    def fit(self, model, trainset, valset=None,  trainloader=None, valloader=None, testloader=None):
+    def fit(self, model, trainset, valset=None):
         assert isinstance(model, LearnerModule)
         model, trainloader, valloader = self.init_model(model, trainset)
 
@@ -123,7 +128,6 @@ class Trainer(object):
         scheduler = optim_configs['scheduler']
 
         for epoch in range(self.max_epochs):
-            self.on_before_zero_grad()
             # Training
             self.train(model, trainloader, epoch, optimizer, scheduler)
             # Evaluation
@@ -147,7 +151,11 @@ class Trainer(object):
     def on_before_zero_grad(self, **kwargs):
         pass
 
+    def on_after_training(self, **kwargs):
+        pass
+
     def train(self, model, trainloader, epoch, optimizer, scheduler=None):
+        self.on_before_zero_grad()
         model.train()
         do_training_log = (epoch % self.training_log_interval == 0)
         
@@ -180,6 +188,9 @@ class Trainer(object):
                 loss.backward()
                 optimizer.step()
                 time_bp = self.timer_net()
+            
+            if torch.isnan(loss):
+                raise ValueError(" loss got Nan !!! ")
 
             out['time_load'] = load_time
             out['time_cuda'] = time_data_cuda
@@ -195,13 +206,10 @@ class Trainer(object):
             if epoch == 0:
                 self.logger.info("[*] Debug Checking Pipeline !!!")
                 break
-            
-        if scheduler is not None:
-            lr = scheduler.get_lr()[0]
-            scheduler.step()
-        else:
-            lr = optimizer.param_groups[0]['lr']
 
+        lr = optimizer.param_groups[0]['lr']
+
+        _dict = None
         if do_training_log:
             _dict = self.recorder.cal_metrics()
             _dict['time_total'] = self.timer_epoch()
@@ -214,6 +222,7 @@ class Trainer(object):
             self.logger.info(f"Epoch {epoch}: {loss_str}")            
             self.logger.add_scalars(_dict, step=epoch, tag='train')
         
+        self.on_after_training(d=_dict)
 
     def validate(self, model, valloader, epoch):
         model.eval()
@@ -310,6 +319,15 @@ def dict_to_str(d):
 def _get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 
+class FakeLogger:
+    def __init__(self) -> None:
+        pass
+
+    def info(self, msg, *args, **kwargs):
+        print(msg, *args, **kwargs)
+
+    def add_scalar(self, msg, *args, **kwargs):
+        pass
 
 if __name__ == '__main__':
     # ------------  For debug  --------------

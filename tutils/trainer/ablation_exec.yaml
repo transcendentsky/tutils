@@ -1,0 +1,30 @@
+base:
+#  gpus: "0,1,2,3"
+  base_dir: './runs/'
+  experiment: "abla"
+  tag: ''
+
+ablation:
+  auto_tag: true
+  gather_record: true
+  parse_mode: "configs" # "configs" or "args"
+  # tag/ablation.tag_try{i}
+  config_file: "conf.yaml"
+  script_file: "demo_train_script.py"
+  running_cmd: "CUDA_VISIBLE_DEVICES=0,1 python -m scripts.demo_train"
+
+  tags: "auto_index" # ["tag1", "tag2"]
+  fixed_opts:
+    training:
+      lr: 0.001
+  opts:
+    training:
+      batch_size: [4,8]
+      num_workers: [2,3]
+    base:
+      runs_dir: ['...', '...']
+#  opts:
+#    sessionname: ['lms_wflw_50_s9_from_aee','lms_wflw_50_s10_from_aee','lms_wflw_50_s11_from_aee','lms_wflw_50_s12_from_aee']
+#    train_count: [50,50,50,50]
+
+#  opts: ['training:batch_size', 'training:num_workers']

@@ -41,8 +41,3 @@ if __name__ == '__main__':
     mainprocess = MainProcess(logger, config)
     funcname = args.func # or funcname = config['func']
     getattr(mainprocess, funcname)()
-
-    # if args.test:
-    #     test(logger, config, args)
-    # else:
-    #     train(logger, config, args)

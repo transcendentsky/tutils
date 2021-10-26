@@ -44,11 +44,14 @@ def trans_configure(config=BASE_CONFIG, **kwargs):
     #     print("------  Config  ------")
     #     _print_dict(config['base'])
     # Create Logger
-    logger = MultiLogger(logdir=config['base']['runs_dir'], 
-                         mode=config['logger']['mode'], 
-                         tag=config['base']['tag'], 
-                         extag=config['base'].get('extag', None), 
-                         action=config['logger'].get('action', 'k')) # backup config.yaml
+    config_base = config['base']
+    config_logger = config['logger']
+    # _print_dict(config)
+    logger = MultiLogger(logdir=config_base['runs_dir'], 
+                         mode=config_logger.get('mode', None), 
+                         tag=config_base['tag'], 
+                         extag=config_base.get('extag', None), 
+                         action=config_logger.get('action', 'k')) # backup config.yaml
     config['base']['__INFO__']['logger'] = logger.mode
     config['base']['__INFO__']['Argv'] = "Argv: python " + ' '.join(sys.argv)
     dump_yaml(logger, _clear_config(config), path=config['base']['runs_dir'] + "/config.yaml")
@@ -135,6 +138,7 @@ def trans_init(args=None, ex_config=None, clear_none=True, **kwargs):
     # Clear some vars with None or ""
     arg_dict = {'base': vars(args)}
     if clear_none:
+        file_config = _clear_config(file_config)
         arg_dict    = _clear_config(arg_dict)
         ex_config   = _clear_config(ex_config)
 

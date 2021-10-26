@@ -9,6 +9,10 @@ import csv
 import pandas as pd
 
 
+def _get_time_str():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
 class CSVLogger(object):
     """
         record dict:
@@ -26,14 +30,18 @@ class CSVLogger(object):
             if os.path.isfile(self.filename):
                 backup_name = self.filename.replace(".csv", "."+_get_time_str()+".csv")
                 shutil.move(self.filename, backup_name)
-                print(f"[ExcelLogger] backup excel file `{self.filename}` to `{backup_name}`")
+                print(f"[CSVLogger] backup excel file `{self.filename}` to `{backup_name}`")
         elif mode == "a+":
-            print("[ExcelLogger] Add data on existing CSV file!")
+            print("[CSVLogger] Add data on existing CSV file!")
+            # self.previous_data = self.read_previous(logdir + "/record.csv")
+            self._keys_write_state_ = True
         else:
             raise NotImplementedError
  
     def record(self, d):
         assert type(d) == dict, f"Got {type(d)}"
+        # Add record time
+        d['record_time'] = _get_time_str()
         if not self._keys_write_state_:
             self.write_row(list(d.keys()))
             self._keys_write_state_ = True

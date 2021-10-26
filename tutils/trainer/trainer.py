@@ -16,6 +16,29 @@ from tqdm import tqdm
 from datetime import datetime
 
 
+def trainer_from_config(logger, config, tester, monitor, **kwargs):
+    config_base = config['base']
+    config_train = config['training']
+    return Trainer(logger=logger,
+                   config=config,
+                   tester=tester,
+                   monitor=monitor,
+                   mode="ps",
+                   runs_dir=config_base['runs_dir'],
+                   tag=config_base['tag'],
+                   num_epochs=config_train['num_epochs'],
+                   batch_size=config_train['batch_size'],
+                   num_workers=config_train.get('num_workers', 0),
+                   save_interval=config_train.get('save_interval', 50),
+                   use_amp=config_train.get('use_amp', False),
+                   val_check_interval=config_train.get('val_check_interval', 50),
+                   save_latest_only=config_train.get('save_latest_only', False),
+                   training_log_interval=config_train.get('training_log_interval', 1),
+                   gpus=config_train.get('gpus', 4),
+                   kwargs=kwargs,
+                   )
+
+
 class Trainer(object):
     def __init__(self, 
                 logger=None, 
@@ -213,12 +236,12 @@ class Trainer(object):
         if do_training_log:
             _dict = self.recorder.cal_metrics()
             _dict['time_total'] = self.timer_epoch()
-            _dict['lr'] = lr
             # print(_dict)
             # assert isinstance(lr, float), f"Got lr={lr}, type: {type(lr)}"
             loss_str = ""
             for k, v in _dict.items():
-                loss_str += "{}:{:.3f} ".format(k, v)
+                loss_str += "{}:{:.4f} ".format(k, v)
+            loss_str += "{}:{:.6e}".format('lr', lr)
             self.logger.info(f"Epoch {epoch}: {loss_str}")            
             self.logger.add_scalars(_dict, step=epoch, tag='train')
         
@@ -242,7 +265,7 @@ class Trainer(object):
         _dict = self.recorder.cal_metrics()
         loss_str = ""
         for k, v in _dict.items():
-            loss_str += "{}:{:.3f} ".format(k, v) # f"{v}:{loss_values[i]}; "
+            loss_str += "{}:{:.6f} ".format(k, v) # f"{v}:{loss_values[i]}; "
         self.logger.info(f"\n\tValidation step, Epoch {epoch}: {loss_str}")            
         self.logger.add_scalars(_dict, step=epoch, tag='val')
         return loss_values

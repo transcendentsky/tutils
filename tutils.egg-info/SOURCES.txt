@@ -88,6 +88,7 @@ tutils/tutils/dl_utils.py
 tutils/tutils/functools.py
 tutils/tutils/grad_cam.py
 tutils/tutils/initializer.py
+tutils/tutils/metriclogger.py
 tutils/tutils/recorder.py
 tutils/tutils/techo.py
 tutils/tutils/tlogger.py

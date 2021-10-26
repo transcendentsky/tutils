@@ -6,6 +6,8 @@ import torch
 import numpy as np
 from tutils import tfunctime
 from typing import Dict, List, Tuple
+import time
+
 
 
 class Recorder(object):
@@ -62,13 +64,16 @@ class Recorder(object):
             self.loss_list.append(l_list)
 
     def cal_metrics(self):
+        if len(self.loss_list) <= 0:
+            return None
         temp = np.array(self.loss_list)
         mean = temp.mean(axis=0)
         # print("debug mean", mean, temp, self.loss_keys)
         return mean, self.loss_keys
 
-class EpochRecorder(object):
-    def __init__(self, logger, config, mode="dec"):
+
+class EpochLogger:
+    def __init__(self, iter, logger, config, mode="dec"):
         # mode in ["dec", "inc"]
         self.logger = logger
         self.config = config
@@ -82,14 +87,77 @@ class EpochRecorder(object):
         else:
             self.comp = self._greater
 
+        self.stop_time = time.time()
+
+        if type(iter) != enumerate:
+            self.iter = enumerate(iter)
+        else:
+            self.iter = iter
+
+        self.recorder = Recorder()
+
     def _less(self, a, b):
-        if a < b: return True
-        else: return False
+        return a < b
 
     def _greater(self, a, b):
-        if a > b: return True
-        else: return False
+        return a > b
 
+    def record_and_return(self, epoch, value):
+        if self.best_epoch is None:
+            self.best_epoch = epoch
+            self.best_value = value
+        if self.comp(value, self.best_epoch):
+            self.best_epoch = epoch
+            self.best_value = value
+            return True
+        else:
+            return False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.recorder.cal_metrics()
+        start = time.time()
+        i, res = self.iter.__next__()
+        # clear
+        self.recorder.clear()
+        return self.recorder, res
+
+
+
+class BatchLogger:
+    def __init__(self, iter, logger, config, mode="dec"):
+        # mode in ["dec", "inc"]
+        self.logger = logger
+        self.config = config
+        self.best_epoch = None
+        self.best_value = None
+        self.epoch_list = []
+        self.value_list = []
+        self.mode = mode
+        if mode == "dec":
+            self.comp = self._less
+        else:
+            self.comp = self._greater
+
+        self.stop_time = time.time()
+        if type(iter) != enumerate:
+            self.iter = enumerate(iter)
+        else:
+            self.iter = iter
+
+        self.recorder = Recorder()
+
+    def _less(self, a, b):
+        return a < b
+        # if a < b: return True
+        # else: return False
+
+    def _greater(self, a, b):
+        return a > b
+        # if a > b: return True
+        # else: return False
 
     def record_and_return(self, epoch, value):
         if self.best_epoch is None:
@@ -104,13 +172,26 @@ class EpochRecorder(object):
         else:
             return False
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        start = time.time()
+        i, res = self.iter.__next__()
+        end = time.time()
+        iter_time = end - self.stop_time
+        self.stop_time = end
+        # clear
+        self.recorder.clear()
+        return (end-start), self.recorder, i, res
+
 
 class Tester(object):
     def __init__(self, args, config, logger):
         self.args = args
         self.config = config
         self.logger = logger
-        self.evaluater = Recoder(logger, config)
+        self.evaluater = Recorder(logger, config)
         self.model = None
 
     def test(self, net=None, epoch=None, train="", dump_label=False):

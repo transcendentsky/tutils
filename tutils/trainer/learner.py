@@ -1,6 +1,9 @@
 import torch
 from torch import nn
 from collections import OrderedDict
+from tutils import MultiLogger
+import os
+from abc import ABC, abstractmethod
 
 
 class LearnerModule(nn.Module):
@@ -10,10 +13,12 @@ class LearnerModule(nn.Module):
         self.logger = logger
         self.net = None
 
+    @abstractmethod
     def forward(self, x, **kwargs):
         # return self.net(x)
         pass
 
+    @abstractmethod
     def training_step(self, data, batch_idx, **kwargs):
         # img1 = data["crp_1"]
         # img2 = data["crp_2"]
@@ -28,9 +33,11 @@ class LearnerModule(nn.Module):
         #         "sim1": sim1, "sim2": sim2, "sim3": sim3, "sim4": sim4}
         pass
 
+    @abstractmethod
     def on_before_zero_grad(self, **kwargs):
         pass
 
+    @abstractmethod
     def configure_optimizers(self, **kwargs):
         # optimizer = optim.Adam(params=self.parameters(), \
         #                    lr=self.config['optim']['learning_rate'], betas=(0.9, 0.999), eps=1e-08,
@@ -38,30 +45,49 @@ class LearnerModule(nn.Module):
         # return {'optimizer': optimizer, "scheduler": None}
         pass
 
+    @abstractmethod
     def validation_step(self, data, batch_idx, **kwargs):
         pass
 
+    @abstractmethod
     def testing_step(self, data, batch_idx, **kwargs):
         pass
 
-    def load(self):
-        pass
-        # assert os.path.exists(ckpt), f"{ckpt}"
-        # print(f'Load CKPT {ckpt}')
-        # state_dict = torch.load(ckpt)
-        # self.net.load_state_dict(state_dict)
+    def load(self, pth=None, *args, **kwargs):
+        assert os.path.exists(pth)
+        print(f'Load CKPT from ``{pth}``')
+        state_dict = torch.load(pth)
+        self.net.load_state_dict(state_dict)
+
+        # new_state_dict = OrderedDict()
+        # for k, v in state_dict.items():
+        #     if not k.startswith("module.target_encoder.net."):
+        #         print("skip: ", k)
+        #         continue
+        #     name = k.replace("module.target_encoder.net.", "")
+        #     new_state_dict[name] = v
+        # self.net.load_state_dict(new_state_dict)
 
     def save(self, pth, **kwargs):        
         # Default: "/model_epoch_{}.pth".format(epoch)
         torch.save(self.net.state_dict(), pth)
         return True
 
-    # def load_state_dict(self, state_dict):
-    #     new_state_dict = OrderedDict()
-    #     for k, v in state_dict.items():
-    #         if not k.startswith("module.target_encoder.net."):
-    #             print("skip: ", k)
-    #             continue
-    #         name = k.replace("module.target_encoder.net.", "")
-    #         new_state_dict[name] = v
-    #     self.net.load_state_dict(new_state_dict)
+    def configure_logger(self, **kwargs):
+        logger = MultiLogger(logdir=self.config['base']['runs_dir'],
+                             mode=self.config['logger']['mode'],
+                             tag=self.config['base']['tag'],
+                             extag=self.config['base'].get('extag', None),
+                             action=self.config['logger'].get('action', 'k'))
+        return {'logger': logger}
+
+    def save_optim(self, pth, optimizer, epoch=0):
+        stat = {'optimizer': optimizer.state_dict(), 'epoch': epoch}
+        torch.save(stat, pth)
+        return True
+
+    def load_optim(self, pth, optimizer):
+        state_dict = torch.load(pth)
+        optimizer.load_state_dict(state_dict['optimizer'])
+        start_epoch = state_dict.get('epoch', 0) + 1
+        return start_epoch

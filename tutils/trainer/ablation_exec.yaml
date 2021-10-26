@@ -5,12 +5,11 @@ base:
   tag: ''
 
 ablation:
-  auto_tag: true
   gather_record: true
   parse_mode: "configs" # "configs" or "args"
   # tag/ablation.tag_try{i}
   config_file: "conf.yaml"
-  script_file: "demo_train_script.py"
+  # script_file: "demo_train_script.py"
   running_cmd: "CUDA_VISIBLE_DEVICES=0,1 python -m scripts.demo_train"
 
   tags: "auto_index" # ["tag1", "tag2"]

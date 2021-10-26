@@ -26,7 +26,7 @@ import shutil
 BASE_CONFIG = {
     'base': {
         'base_dir'  : './runs_debug/',
-        'experiment': "test_param1",
+        'experiment': '',
         'tag': '',
         'stage': '', 
         'extag': '',

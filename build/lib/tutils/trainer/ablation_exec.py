@@ -70,9 +70,10 @@ def parse_opts(d):
         try:
             r.append(_config_parsing(d, i))
         except:
-            print("Parsing Opts length: ", i)
+            print("End parsing")
             break
         i += 1
+    print("Parsing Opts length: ", len(r))
     return r
 
 class AblationTrainer(object):
@@ -85,7 +86,7 @@ class AblationTrainer(object):
         self.runs_dir = ablation_config['base']['runs_dir']
 
         self.gather_record = ablation_config['ablation'].get('gather_record', False)
-        self.config_file = ablation_config["ablation"]['config_file']
+        self.config_file = ablation_config["ablation"].get('config_file', None)
         # self.script_file = ablation_config["ablation"]['script_file']
         self.opts = ablation_config['ablation']['opts']
         self.running_cmd = ablation_config['ablation']['running_cmd']
@@ -93,6 +94,7 @@ class AblationTrainer(object):
 
         self.parse_mode = ablation_config['ablation'].get('parse_mode', "configs")
         if self.parse_mode == "configs":
+            assert self.config_file is not None
             self.config_list, self.params_list = self.build_tmp_config_file()
         elif self.parse_mode == "args":
             self.config_list, self.params_list = self.build_tmp_args_list()
@@ -103,9 +105,9 @@ class AblationTrainer(object):
 
         self.abla_tags = ablation_config['ablation'].get("tags", None)
         self.auto_tag = True if self.abla_tags is not None else False
-        assert len(self.abla_tags) >= self.config_len, f"Error! tags is not enough, len(self.abla_tags) = {len(self.abla_tags)} < len(self.config_list) = {self.config_len}"
         if isinstance(self.abla_tags, list):
             print(f"[Ablation Trainer] tag_type: List")
+            assert len(self.abla_tags) >= self.config_len, f"Error! tags is not enough, len(self.abla_tags) = {len(self.abla_tags)} < len(self.config_list) = {self.config_len}"
         elif isinstance(self.abla_tags, str):
             print("[Ablation Trainer] tag_type: str")
             if self.abla_tags == "auto":
@@ -163,11 +165,10 @@ class AblationTrainer(object):
             else: tag = None
 
             self.logger.info(f"Run cmd: {cmd}")
-            ret_value = subprocess.call(cmd, shell=True)
-            self.logger.info(f"ret value: {ret_value}")
-
+            p = subprocess.Popen(cmd, shell=True)
+            p.wait()
             if self.gather_record:
-                self.integrate_records(config, {**params, **{"ret_value": ret_value}}, tag)
+                self.integrate_records(config, {**params}, tag)
 
     def run_with_args(self):
         assert len(self.config_list) > 0, f"Config File Error: Got NO opts to parse"
@@ -185,11 +186,12 @@ class AblationTrainer(object):
             else: tag = None
 
             self.logger.info(f"Run cmd: {cmd}")
-            ret_value = subprocess.call(cmd, shell=True)
-            self.logger.info(f"ret value: {ret_value}")
+            p = subprocess.Popen(cmd, shell=True)
+            p.wait()
 
             if self.gather_record:
-                self.integrate_records(args,  {**params, **{"ret_value": ret_value}}, tag)
+                raise NotImplementedError("Gather_record Only supported when parse_mode='configs'. ")
+                self.integrate_records(args,  {**params}, tag)
 
     def integrate_records(self, config, params, tag):
         runs_dir = self._search_runs_dir(config, tag)
@@ -215,7 +217,7 @@ class AblationTrainer(object):
             return d
         # raise FileNotFoundError
         # construct runs_dir path according to initilizer
-        print("[Ablation Trainer] guess the runs_dir: ")
+        print("[Ablation Trainer] guess the runs_dir: ", end='')
         experiment = config['base'].get('experiment', '')
         stage = config['base'].get('stage', '')
         _tag = config['base'].get('tag', '')

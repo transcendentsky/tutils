@@ -8,3 +8,4 @@ from .initializer import *
 from .functools import print_dict
 from .dl_utils import *
 from .visualizers import *
+from .metriclogger import MetricLogger

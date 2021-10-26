@@ -22,6 +22,7 @@ class tenum:
             self.iter = enumerate(iter)
         else:
             self.iter = iter
+
     def __iter__(self):
         return self
     

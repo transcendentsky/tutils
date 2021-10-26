@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-    Borrow some code and minds from:
+    Borrow some code and ideas from:
         https://github.com/facebookresearch/barlowtwins
 
 """
@@ -25,13 +25,21 @@ import subprocess
 import sys
 
 
+def ddptrainer_from_config(config, tester, monitor, **kwargs):
+    return DDPTrainer(config=config,
+                      tester=tester,
+                      monitor=monitor,
+                      kwargs=kwargs)
+
+
 class DDPTrainer(object):
     def __init__(self,
                  logger=None,
                  config=None,
-                 mode="ddp",
                  tester=None,
                  monitor=None,
+                 mode="ddp",
+                 **kwargs
                  ):
         """
             mode:
@@ -39,13 +47,15 @@ class DDPTrainer(object):
                 ddp: Distributed data parallel
         """
         assert mode in ['ps', "ddp"]
+        # self.logger = [logger]
+        self.logger = None
+        # assert logger is None
         self.mode = mode
         self.config = config
         self.tester = tester
         self.monitor = monitor
         self.gpus = config['training'].get('gpus', '0,1,2,3,4,5,6,7')
         os.environ['CUDA_VISIBLE_DEVICES'] = self.gpus
-        assert self.gpus == "1,7"
         print("[*] GPUs: ", self.gpus)
         self.world_size = torch.cuda.device_count()
 
@@ -54,14 +64,15 @@ class DDPTrainer(object):
 
     def init_ddp(self, model, trainset, **kwargs):
         torch.multiprocessing.spawn(start_ddp_worker,
-                                    (self.world_size, self.config, model, trainset, self.tester, self.monitor),
+                                    (self.world_size, self.logger, self.config, model, trainset, self.tester, self.monitor),
                                     nprocs=self.world_size,
                                     join=True, )
 
 
-def start_ddp_worker(rank, world_size, config, model, trainset, tester, monitor):
-    print("Start DDP worker: rank ", rank, world_size)
-    worker = DDPWorker(config=config,
+def start_ddp_worker(rank, world_size, logger, config, model, trainset, tester, monitor):
+    print(f"Start DDP worker: rank={rank}, world_size={world_size}")
+    worker = DDPWorker(logger=logger,
+                       config=config,
                        rank=rank,
                        world_size=world_size,
                        tester=tester,
@@ -71,11 +82,14 @@ def start_ddp_worker(rank, world_size, config, model, trainset, tester, monitor)
 
 
 class DDPWorker(object):
-    def __init__(self, config,
+    def __init__(self,
+                 logger,
+                 config,
                  rank,
                  world_size,
                  tester,
                  monitor):
+        # self.logger = logger[0] if rank == 0 else None
         self.config = config
         self.rank = rank
         self.world_size = world_size
@@ -83,8 +97,7 @@ class DDPWorker(object):
 
         self.gpus = config['training'].get('gpus', '0,1,2,3,4,5,6,7')
         os.environ['CUDA_VISIBLE_DEVICES'] = self.gpus
-        assert self.gpus == "1,7"
-        print("[*] GPUs: ", self.gpus)
+        # print("[*] GPUs: ", self.gpus)
 
         self.tag = config['base']['tag']
         self.runs_dir = config['base']['runs_dir']
@@ -102,7 +115,7 @@ class DDPWorker(object):
 
         # Logging, in GPU 0
         if self.rank == 0:
-            print("")
+            print("Logger at Process(rank=0)")
             self.recorder = Recorder()
             self.recorder_test = Recorder()
             self.logger = None
@@ -128,6 +141,7 @@ class DDPWorker(object):
 
     def init_timers(self):
         self.timer_epoch = timer("one epoch") if self.rank == 0 else VoidTimer()
+        self.timer_batch = timer("a batch") if self.rank == 0 else VoidTimer()
         self.timer_data = timer("data time") if self.rank == 0 else VoidTimer()
         self.timer_net = timer("net forwarding") if self.rank == 0 else VoidTimer()
         self.timer_eval = timer("evaluation") if self.rank == 0 else VoidTimer()
@@ -135,11 +149,12 @@ class DDPWorker(object):
 
     def fit(self, model, trainset):
         if self.rank == 0:
+            assert isinstance(model, LearnerModule), "model type error!"
             self.logger = model.configure_logger()['logger']
 
         model.net = model.net.to(self.rank)
         model.net = nn.SyncBatchNorm.convert_sync_batchnorm(model.net)
-        model.net = torch.nn.parallel.DistributedDataParallel(model.net, device_ids=[self.rank])
+        model.net = torch.nn.parallel.DistributedDataParallel(model.net, device_ids=[self.rank], find_unused_parameters=True)
 
         sampler = torch.utils.data.distributed.DistributedSampler(trainset, shuffle=True)
         assert self.batch_size % self.world_size == 0
@@ -150,15 +165,34 @@ class DDPWorker(object):
 
         # Set optimizer and scheduler
         optim_configs = model.configure_optimizers()
+        assert isinstance(optim_configs, dict)
         optimizer = optim_configs['optimizer']
         scheduler = optim_configs['scheduler']
 
         for epoch in range(self.max_epochs):
             self.on_before_zero_grad()
             # Training
-            self.train(model, self.trainloader, epoch, optimizer, scheduler)
+            do_training_log = (epoch % self.training_log_interval == 0)
+            self.train(model, self.trainloader, epoch, optimizer, scheduler, do_training_log)
+
+            # epoch logger !
+            if do_training_log and self.rank == 0:
+                _dict = self.recorder.cal_metrics()
+                _dict['time_total'] = self.timer_epoch()
+                # print(_dict)
+                # assert isinstance(lr, float), f"Got lr={lr}, type: {type(lr)}"
+                loss_str = ""
+                for k, v in _dict.items():
+                    loss_str += "{}:{:.4f} ".format(k, v)
+                lr = optimizer.param_groups[0]['lr']
+                _dict['lr'] = lr
+                loss_str += "{}:{:.6e} ".format('lr', lr)
+                self.logger.info(f"Epoch {epoch}: {loss_str}")
+                self.logger.add_scalars(_dict, step=epoch, tag='train')
+
             # Evaluation
             if epoch % self.val_check_interval == 0 and self.rank == 0:
+                print("Note: Tester runs on <rank 0> only")
                 if self.tester is not None:
                     out = self.tester.test(model, epoch, self.rank)
                     if self.monitor is not None:
@@ -178,19 +212,19 @@ class DDPWorker(object):
     def on_before_zero_grad(self, **kwargs):
         pass
 
-    def train(self, model, trainloader, epoch, optimizer, scheduler=None):
+    def train(self, model, trainloader, epoch, optimizer, scheduler=None, do_training_log=True):
         model.train()
-        do_training_log = (epoch % self.training_log_interval == 0)
 
         if do_training_log and self.rank == 0:
             self.recorder.clear()
             time_record = 0.1111
-            self.timer_epoch()
+            self.timer_batch()
 
-        for load_time, batch_idx, data in tqdm(tenum(trainloader), ncols=100):
+        for load_time, batch_idx, data in tenum(trainloader):
             model.on_before_zero_grad()
             optimizer.zero_grad()
             self.timer_data()
+            # training steps
             for k, v in data.items():
                 if type(v) == torch.Tensor:
                     data[k] = v.to(self.rank)
@@ -199,6 +233,7 @@ class DDPWorker(object):
                 with autocast():
                     self.timer_net()
                     out = model.training_step(data, batch_idx)
+                    assert isinstance(out, dict)
                     time_fd = self.timer_net()
                     loss = out['loss']
                     self.scaler.scale(loss).backward()
@@ -208,41 +243,35 @@ class DDPWorker(object):
             else:
                 self.timer_net()
                 out = model.training_step(data, batch_idx)
+                if torch.isnan(out['loss']):
+                    print("Nan Value: ", out['loss'])
+                    raise ValueError
+                assert isinstance(out, dict)
                 time_fd = self.timer_net()
                 loss = out['loss']
                 loss.backward()
                 optimizer.step()
                 time_bp = self.timer_net()
 
+            time_batch = self.timer_batch()
+            # batch logger !
             if do_training_log and self.rank == 0:
                 out['time_load'] = load_time
                 out['time_cuda'] = time_data_cuda
                 out['time_forward'] = time_fd
                 out['time_bp'] = time_bp
                 out['time_record'] = time_record
-
+                out['time_batch'] = time_batch
                 self.timer_data()
                 self.recorder.record(out)
                 time_record = self.timer_data()
-
+            # for debug !
             if epoch == 0:
                 if self.rank == 0:
                     self.logger.info("[*] Debug Checking Pipeline !!!")
                 break
 
-        lr = optimizer.param_groups[0]['lr']
-
-        if do_training_log and self.rank == 0:
-            _dict = self.recorder.cal_metrics()
-            _dict['time_total'] = self.timer_epoch()
-            _dict['lr'] = lr
-            # print(_dict)
-            # assert isinstance(lr, float), f"Got lr={lr}, type: {type(lr)}"
-            loss_str = ""
-            for k, v in _dict.items():
-                loss_str += "{}:{:.3f} ".format(k, v)
-            self.logger.info(f"Epoch {epoch}: {loss_str}")
-            self.logger.add_scalars(_dict, step=epoch, tag='train')
+        scheduler.step()
 
     def save(self, model, epoch, type=None):
         if self.rank != 0:
@@ -262,9 +291,20 @@ class DDPWorker(object):
             save_name = "/ckpt/best_model_epoch_{}.pth".format(epoch)
             model.save(tfilename(self.runs_dir, save_name), epoch=epoch, is_best=True)
             self.logger.info(f"[Best model] Epoch {epoch}: Save model to ``{save_name}``! ")
+        elif type == "training_stat":
+            save_name = "/ckpt/model_latest.pth"
+            model.save(tfilename(self.runs_dir, save_name), epoch=epoch, is_latest=True)
+            save_optim_name = "/ckpt/optim_latest.pth"
+            model.save_optim(tfilename(self.runs_dir, save_optim_name), optimizer=self.optimizer, epoch=epoch)
+            self.logger.info(f"Epoch {epoch}: Save checkpoint to ``{save_name}``")
+
 
     def cleanup(self):
         torch.distributed.destroy_process_group()
+
+    def info(self, msg, *args, **kwargs):
+        if self.rank == 0:
+            self.logger.info(msg, *args, **kwargs)
 
 
 class VoidTimer(object):

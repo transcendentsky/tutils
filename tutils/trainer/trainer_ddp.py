@@ -23,6 +23,7 @@ import os
 import signal
 import subprocess
 import sys
+from .utils.trainer_utils import MultiOptimizer, MultiScheduler
 
 
 def ddptrainer_from_config(config, tester, monitor, **kwargs):
@@ -106,6 +107,8 @@ class DDPWorker(object):
         self.num_workers = config['training']['num_workers']
         self.save_interval = config['training']['save_interval']
 
+        self.load_pretrain_model = config['training'].get('load_pretrain_model', False)
+        self.pretrain_model = config['training'].get('pretrain_model', None)
         self.val_check_interval = config['training'].get('val_check_interval', 50)
         self.training_log_interval = config['training'].get('training_log_interval', 1)
         self.use_amp = config['training'].get('use_amp', False)
@@ -152,6 +155,9 @@ class DDPWorker(object):
             assert isinstance(model, LearnerModule), "model type error!"
             self.logger = model.configure_logger()['logger']
 
+        # Initialize Models and DataLoader and Optimizers
+        if self.load_pretrain_model:
+            model.load()
         model.net = model.net.to(self.rank)
         model.net = nn.SyncBatchNorm.convert_sync_batchnorm(model.net)
         model.net = torch.nn.parallel.DistributedDataParallel(model.net, device_ids=[self.rank], find_unused_parameters=True)
@@ -163,11 +169,7 @@ class DDPWorker(object):
             trainset, batch_size=per_device_batch_size, num_workers=self.num_worker,
             pin_memory=True, sampler=sampler, drop_last=True)
 
-        # Set optimizer and scheduler
-        optim_configs = model.configure_optimizers()
-        assert isinstance(optim_configs, dict)
-        optimizer = optim_configs['optimizer']
-        scheduler = optim_configs['scheduler']
+        optimizer, scheduler = self.configure_optim(model)
 
         for epoch in range(self.max_epochs):
             self.on_before_zero_grad()
@@ -184,7 +186,8 @@ class DDPWorker(object):
                 loss_str = ""
                 for k, v in _dict.items():
                     loss_str += "{}:{:.4f} ".format(k, v)
-                lr = optimizer.param_groups[0]['lr']
+                # lr = optimizer.param_groups[0]['lr']
+                lr = self.get_lr(optimizer)
                 _dict['lr'] = lr
                 loss_str += "{}:{:.6e} ".format('lr', lr)
                 self.logger.info(f"Epoch {epoch}: {loss_str}")
@@ -208,6 +211,20 @@ class DDPWorker(object):
                 self.save(model, epoch)
         print("Training is Over for GPU rank ", self.rank)
         self.cleanup()
+
+    def configure_optim(self, model, **kwargs):
+        # Set optimizer and scheduler
+        optim_configs = model.configure_optimizers()
+        assert isinstance(optim_configs, dict)
+        optimizer = optim_configs['optimizer']
+        scheduler = optim_configs['scheduler']
+
+        if isinstance(optimizer, list):
+            optimizer = MultiOptimizer(optimizer)
+        if isinstance(scheduler, list):
+            scheduler = MultiScheduler(scheduler)
+        return optimizer, scheduler
+
 
     def on_before_zero_grad(self, **kwargs):
         pass
@@ -270,7 +287,6 @@ class DDPWorker(object):
                 if self.rank == 0:
                     self.logger.info("[*] Debug Checking Pipeline !!!")
                 break
-
         scheduler.step()
 
     def save(self, model, epoch, type=None):
@@ -298,13 +314,18 @@ class DDPWorker(object):
             model.save_optim(tfilename(self.runs_dir, save_optim_name), optimizer=self.optimizer, epoch=epoch)
             self.logger.info(f"Epoch {epoch}: Save checkpoint to ``{save_name}``")
 
-
     def cleanup(self):
         torch.distributed.destroy_process_group()
 
     def info(self, msg, *args, **kwargs):
         if self.rank == 0:
             self.logger.info(msg, *args, **kwargs)
+
+    def get_lr(self, optimizer):
+        if isinstance(optimizer, MultiOptimizer):
+            return optimizer.get_lr()
+        else:
+            return optimizer.param_groups[0]['lr']
 
 
 class VoidTimer(object):

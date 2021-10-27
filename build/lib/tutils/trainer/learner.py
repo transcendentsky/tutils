@@ -34,10 +34,6 @@ class LearnerModule(nn.Module):
         pass
 
     @abstractmethod
-    def on_before_zero_grad(self, **kwargs):
-        pass
-
-    @abstractmethod
     def configure_optimizers(self, **kwargs):
         # optimizer = optim.Adam(params=self.parameters(), \
         #                    lr=self.config['optim']['learning_rate'], betas=(0.9, 0.999), eps=1e-08,
@@ -52,6 +48,15 @@ class LearnerModule(nn.Module):
     @abstractmethod
     def testing_step(self, data, batch_idx, **kwargs):
         pass
+
+    def on_before_zero_grad(self, **kwargs):
+        pass
+
+    def info(self, msg, *args, **kwargs):
+        if self.logger is not None:
+            self.logger.info(msg, *args, **kwargs)
+        else:
+            print(msg, *args, **kwargs)
 
     def load(self, pth=None, *args, **kwargs):
         assert os.path.exists(pth)
@@ -70,7 +75,7 @@ class LearnerModule(nn.Module):
 
     def save(self, pth, **kwargs):        
         # Default: "/model_epoch_{}.pth".format(epoch)
-        torch.save(self.net.state_dict(), pth)
+        torch.save(self.net.module.state_dict(), pth)
         return True
 
     def configure_logger(self, **kwargs):

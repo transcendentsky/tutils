@@ -80,6 +80,8 @@ tutils/trainer/simple_script_helper.py
 tutils/trainer/trainer.py
 tutils/trainer/trainer_ddp.py
 tutils/trainer/tuner_exec.py
+tutils/trainer/utils/__init__.py
+tutils/trainer/utils/trainer_utils.py
 tutils/tutils/NOTES.md
 tutils/tutils/__init__.py
 tutils/tutils/build_proj.py

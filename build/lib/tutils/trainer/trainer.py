@@ -14,6 +14,8 @@ from torch.cuda.amp import autocast, GradScaler
 from .recorder import Recorder
 from tqdm import tqdm
 from datetime import datetime
+from .utils.trainer_utils import MultiOptimizer, MultiScheduler
+
 
 
 def trainer_from_config(logger, config, tester, monitor, **kwargs):
@@ -34,6 +36,7 @@ def trainer_from_config(logger, config, tester, monitor, **kwargs):
                    val_check_interval=config_train.get('val_check_interval', 50),
                    save_latest_only=config_train.get('save_latest_only', False),
                    training_log_interval=config_train.get('training_log_interval', 1),
+                   load_pretrain_model=config_train.get('load_pretrain_model', False),
                    gpus=config_train.get('gpus', 4),
                    kwargs=kwargs,
                    )
@@ -56,6 +59,7 @@ class Trainer(object):
                 monitor=None, 
                 save_latest_only=False, 
                 training_log_interval=1,         # training log every n epochs
+                load_pretrain_model=False,
                 gpus=4, 
                 sync_batchnorm=True, 
                 **kwargs):
@@ -86,6 +90,7 @@ class Trainer(object):
         self.val_check_interval = val_check_interval # config['validation']['val_check_interval']
         self.save_latest_only = save_latest_only
         self.training_log_interval = training_log_interval
+        self.load_pretrain_model = load_pretrain_model
         if self.use_amp:
             self.logger.info("[*] You are using AMP accelaration. ")
 
@@ -108,6 +113,7 @@ class Trainer(object):
         self.timer_net   = timer("net forwarding")
         self.timer_eval  = timer("evaluation")
         self.timer_write = timer("writing files")
+        self.timer_batch = timer("a batch")
 
     def init_model(self, model, trainset, valset=None):
         if self.mode == "ddp":
@@ -128,9 +134,9 @@ class Trainer(object):
                                  batch_size=1, num_workers=1)
         else:
             valloader = None
-
+        if self.load_pretrain_model:
+            model.load()
         model.net = torch.nn.DataParallel(model.net)
-        model.load()
         model.cuda()
 
         if self.use_amp:
@@ -141,14 +147,24 @@ class Trainer(object):
 
         return model, trainloader, valloader
 
+    def configure_optim(self, model, **kwargs):
+        # Set optimizer and scheduler
+        optim_configs = model.configure_optimizers()
+        assert isinstance(optim_configs, dict)
+        optimizer = optim_configs['optimizer']
+        scheduler = optim_configs['scheduler']
+
+        if isinstance(optimizer, list):
+            optimizer = MultiOptimizer(optimizer)
+        if isinstance(scheduler, list):
+            scheduler = MultiScheduler(scheduler)
+        return optimizer, scheduler
+
     def fit(self, model, trainset, valset=None):
         assert isinstance(model, LearnerModule)
         model, trainloader, valloader = self.init_model(model, trainset)
 
-        # Set optimizer and scheduler
-        optim_configs = model.configure_optimizers()
-        optimizer = optim_configs['optimizer']
-        scheduler = optim_configs['scheduler']
+        optimizer, scheduler = self.configure_optim(model)
 
         for epoch in range(self.max_epochs):
             # Training
@@ -184,7 +200,7 @@ class Trainer(object):
         
         self.recorder.clear()
         time_record = 0.1111
-        self.timer_epoch()
+        self.timer_batch()
         for load_time, batch_idx, data in tqdm(tenum(trainloader), ncols=100):
             model.on_before_zero_grad()
             optimizer.zero_grad()
@@ -215,13 +231,14 @@ class Trainer(object):
             if torch.isnan(loss):
                 raise ValueError(" loss got Nan !!! ")
 
-            out['time_load'] = load_time
-            out['time_cuda'] = time_data_cuda
-            out['time_forward'] = time_fd
-            out['time_bp'] = time_bp
-            out['time_record'] = time_record
-
+            time_batch = self.timer_batch()
             if do_training_log:
+                out['time_load'] = load_time
+                out['time_cuda'] = time_data_cuda
+                out['time_forward'] = time_fd
+                out['time_bp'] = time_bp
+                out['time_record'] = time_record
+                out['time_batch'] = time_batch
                 self.timer_data()
                 self.recorder.record(out)
                 time_record = self.timer_data()
@@ -230,7 +247,8 @@ class Trainer(object):
                 self.logger.info("[*] Debug Checking Pipeline !!!")
                 break
 
-        lr = optimizer.param_groups[0]['lr']
+        # lr = optimizer.param_groups[0]['lr']
+        lr = self.get_lr(optimizer)
 
         _dict = None
         if do_training_log:
@@ -246,6 +264,13 @@ class Trainer(object):
             self.logger.add_scalars(_dict, step=epoch, tag='train')
         
         self.on_after_training(d=_dict)
+
+    def get_lr(self, optimizer):
+        if isinstance(optimizer, MultiOptimizer):
+            return optimizer.get_lr()
+        else:
+            return optimizer.param_groups[0]['lr']
+
 
     def validate(self, model, valloader, epoch):
         model.eval()
@@ -268,7 +293,7 @@ class Trainer(object):
             loss_str += "{}:{:.6f} ".format(k, v) # f"{v}:{loss_values[i]}; "
         self.logger.info(f"\n\tValidation step, Epoch {epoch}: {loss_str}")            
         self.logger.add_scalars(_dict, step=epoch, tag='val')
-        return loss_values
+        # return loss_values
 
     def _init_test(self, model):
         model.net = torch.nn.DataParallel(model.net)
@@ -306,32 +331,7 @@ class Trainer(object):
         model.save(tfilename(self.runs_dir + "/ckpt/best_model_epoch_{}.pth".format(epoch)), epoch=epoch, is_best=True)
         self.logger.info(f"[Best model] Epoch {epoch}: Saved best model to ``{self.runs_dir + '/ckpt/model_epoch_{}.pth'.format(epoch)}``! ")
 
-    # def init_ddp_env(self):
-    #     # 1 Initialize
-    #     torch.distributed.init_process_group(backend="nccl")
-    #     # 2 set up gpu for each process
-    #     self.local_rank = torch.distributed.get_rank()
-    #     torch.cuda.set_device(self.local_rank)
-    #     self.device = torch.device("cuda", self.local_rank)
-    #     print("debug: ", self.local_rank, self.device)
-    #
-    # def init_ddp(self, model, trainset, valset):
-    #     # 3 Use DistributedSampler
-    #     trainloader = DataLoader(dataset=trainset,
-    #                              batch_size=self.batch_size,
-    #                              sampler=DistributedSampler(trainset), shuffle=True, drop_last=True)
-    #     # 4 move the network to the predetermined gpu
-    #     model.to(self.device)
-    #     if torch.cuda.device_count() > 1:
-    #         print("Let's use", torch.cuda.device_count(), "GPUs!")
-    #         # 5) pack up with DistributedDataParallel
-    #         model = torch.nn.parallel.DistributedDataParallel(model,
-    #                                                           device_ids=[self.local_rank],
-    #                                                           output_device=self.local_rank)
-    #     return model, trainloader
-    #
-    # def cleanup(self):
-    #     torch.distributed.destroy_process_group()
+
 
 def dict_to_str(d):
     loss_str = ""

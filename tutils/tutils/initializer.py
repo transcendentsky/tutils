@@ -103,7 +103,7 @@ def trans_args(parser=None):
     except:
         print("Already add '--test' ")
     try:
-        parser.add_argument("--func", type=str, default="", help=" function name for test specific funciton ")
+        parser.add_argument("--func", type=str, default="train", help=" function name for test specific funciton ")
     except:
         print("Already add '--func' ")
     

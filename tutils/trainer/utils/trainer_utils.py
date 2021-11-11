@@ -1,3 +1,5 @@
+from datetime import datetime
+
 
 
 class MultiOptimizer(object):
@@ -31,3 +33,21 @@ class MultiScheduler(object):
     def get_lr(self):
         return self.sche_list[0].optimizer.param_groups[0]['lr']
 
+
+class VoidTimer(object):
+    def __init__(self, *args):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return None
+
+
+def dict_to_str(d):
+    loss_str = ""
+    for k, v in d.items():
+        loss_str += "\t {}\t: {} \n".format(k, v)  # f"{v}:{loss_values[i]}; "
+    return loss_str
+
+
+def _get_time_str():
+    return datetime.now().strftime('%m%d-%H%M%S')

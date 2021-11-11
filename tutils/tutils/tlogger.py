@@ -118,7 +118,7 @@ class _MyFormatter(logging.Formatter):
         self.colorful = colorful
         extag = '-' + extag if (extag is not None and extag != '') else ''
         # print(tag, extag)
-        self.taginfo = self._colored_str(f'[{tag + extag}]', 'cyan') if tag is not None else ''        
+        self.taginfo = self._colored_str(f'[{tag}{extag}]', 'cyan') if tag is not None else ''
         super(_MyFormatter, self).__init__(*args, **kwargs)
         
     def format(self, record):    

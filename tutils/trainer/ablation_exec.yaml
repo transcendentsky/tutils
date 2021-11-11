@@ -1,18 +1,21 @@
+# Used with ablation_exec (cmd)
+
 base:
 #  gpus: "0,1,2,3"
   base_dir: './runs/'
   experiment: "abla"
   tag: ''
+  parse_mode: "configs" # "configs" or "args"
 
 ablation:
-  gather_record: true
-  parse_mode: "configs" # "configs" or "args"
   # tag/ablation.tag_try{i}
+  tag: "ablation"
   config_file: "conf.yaml"
-  # script_file: "demo_train_script.py"
+  script_file: "demo_train_script.py"
   running_cmd: "CUDA_VISIBLE_DEVICES=0,1 python -m scripts.demo_train"
+  tags: "auto" # ["tag1", "tag2"]
 
-  tags: "auto_index" # ["tag1", "tag2"]
+  # ------ for parse_mode = configs ----------
   fixed_opts:
     training:
       lr: 0.001
@@ -22,8 +25,14 @@ ablation:
       num_workers: [2,3]
     base:
       runs_dir: ['...', '...']
+
+#  ------ for parse_mode = configs ----------
 #  opts:
 #    sessionname: ['lms_wflw_50_s9_from_aee','lms_wflw_50_s10_from_aee','lms_wflw_50_s11_from_aee','lms_wflw_50_s12_from_aee']
 #    train_count: [50,50,50,50]
 
 #  opts: ['training:batch_size', 'training:num_workers']
+
+# ---------------------------
+# tag/ablation.tag_try{i}
+# script_file: "demo_train_script.py"

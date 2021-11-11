@@ -295,7 +295,8 @@ def reduce_dict(input_dict, average=True):
 
 
 class MetricLogger(object):
-    def __init__(self, delimiter="\t"):
+    def __init__(self, delimiter="\t", logger=None):
+        self.logger = logger
         self.meters = defaultdict(SmoothedValue)
         self.delimiter = delimiter
 

@@ -5,6 +5,12 @@ import shutil
 import os
 from .functools import d, _get_time_str, _ordereddict_to_dict
 from pathlib import Path
+from datetime import datetime
+
+
+
+def time_str():
+    return datetime.now().strftime('%m%d-%H%M%S')
 
 
 def save_script(runs_dir, _file_name, logger=None):

@@ -13,7 +13,7 @@ def demo():
 
     model = resnet50(pretrained=True)
     target_layers = [model.layer4[-1]]
-    input_tensor = # Create an input tensor image for your model..
+    input_tensor = None # Create an input tensor image for your model..
     # Note: input_tensor can be a batch tensor with several images!
 
     # Construct the CAM object once, and then re-use it on many images:

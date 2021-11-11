@@ -1,17 +1,29 @@
 import torch
-from torch import nn
-from collections import OrderedDict
 from tutils import MultiLogger
 import os
 from abc import ABC, abstractmethod
 
 
-class LearnerModule(nn.Module):
+class LearnerWrapper:
     def __init__(self, config=None, logger=None, **kwargs):
-        super(LearnerModule, self).__init__()
         self.config = config
         self.logger = logger
         self.net = None
+
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
+
+    def train(self):
+        self.net.train()
+
+    def eval(self):
+        self.net.eval()
+
+    def cuda(self):
+        self.net.cuda()
+
+    def to(self, rank):
+        self.net.to(rank)
 
     @abstractmethod
     def forward(self, x, **kwargs):
@@ -73,26 +85,28 @@ class LearnerModule(nn.Module):
         #     new_state_dict[name] = v
         # self.net.load_state_dict(new_state_dict)
 
-    def save(self, pth, **kwargs):        
+    def save(self, pth, *args, **kwargs):
         # Default: "/model_epoch_{}.pth".format(epoch)
         torch.save(self.net.module.state_dict(), pth)
         return True
 
-    def configure_logger(self, **kwargs):
+    def configure_logger(self, *args, **kwargs):
         logger = MultiLogger(logdir=self.config['base']['runs_dir'],
                              mode=self.config['logger']['mode'],
                              tag=self.config['base']['tag'],
-                             extag=self.config['base'].get('extag', None),
+                             extag=self.config['base'].get('experiment', None),
                              action=self.config['logger'].get('action', 'k'))
         return {'logger': logger}
 
-    def save_optim(self, pth, optimizer, epoch=0):
+    def save_optim(self, pth, optimizer, epoch=0, *args, **kwargs):
         stat = {'optimizer': optimizer.state_dict(), 'epoch': epoch}
         torch.save(stat, pth)
         return True
+        # pass
 
-    def load_optim(self, pth, optimizer):
-        state_dict = torch.load(pth)
-        optimizer.load_state_dict(state_dict['optimizer'])
-        start_epoch = state_dict.get('epoch', 0) + 1
-        return start_epoch
+    def load_optim(self, optimizer, pth=None, *args):
+        # state_dict = torch.load(pth)
+        # optimizer.load_state_dict(state_dict['optimizer'])
+        # start_epoch = state_dict.get('epoch', 0) + 1
+        # return start_epoch
+        return 0

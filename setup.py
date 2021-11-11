@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="tutils",
+    name="trans-utils",
     version="0.2.0",
     author="Curliq",
     author_email="transcendentsiki@gmail.com",

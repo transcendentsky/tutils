@@ -9,12 +9,13 @@ from typing import Dict, List, Tuple
 
 
 class Recorder(object):
-    def __init__(self, logger=None, config=None):
+    def __init__(self, logger=None, config=None, reduction="mean"):
         super(Recorder, self).__init__()
         self.logger = logger
         self.config = config
         self.loss_list = []
         self.loss_keys = None
+        self.reduction = reduction
 
     def clear(self):
         self.loss_list.clear()
@@ -64,10 +65,15 @@ class Recorder(object):
 
     def cal_metrics(self):
         temp = np.array(self.loss_list)
-        mean = temp.mean(axis=0)
+        if self.reduction == "mean":
+            res = temp.mean(axis=0)
+        elif self.reduction == "sum":
+            res = temp.sum(axis=0)
+        else:
+            raise ValueError
         # print("debug mean", mean, temp, self.loss_keys)
         
-        _dict = {k: mean[i] for i, k in enumerate(self.loss_keys)}
+        _dict = {k: res[i] for i, k in enumerate(self.loss_keys)}
         return _dict
 
 class EpochRecorder(object):
@@ -92,7 +98,6 @@ class EpochRecorder(object):
     def _greater(self, a, b):
         if a > b: return True
         else: return False
-
 
     def record_and_return(self, epoch, value):
         if self.best_epoch is None:

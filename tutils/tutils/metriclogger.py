@@ -37,6 +37,24 @@ import torch.distributed as dist
 from PIL import ImageFilter, ImageOps
 
 
+def usage():
+    from tutils import trans_args, trans_init, print_dict
+    args = trans_args()
+    print(args)
+    logger, config = trans_init(args)
+
+    print(" ---------------------------------------------------------")
+    print_dict(config)
+
+    metriclogger = MetricLogger(logger=None)
+
+    for data in metriclogger.log_every(range(20), print_freq=2, header="[trans]"):
+        i = 0
+        metriclogger.update(**{"ind": i, "data": data})
+
+    results = metriclogger.return_final_dict()
+    
+
 class GaussianBlur(object):
     """
     Apply Gaussian Blur to the PIL image.
@@ -210,7 +228,7 @@ class SmoothedValue(object):
     window or the global series average.
     """
 
-    def __init__(self, window_size=20, fmt=None):
+    def __init__(self, window_size=1, fmt=None):
         if fmt is None:
             fmt = "{median:.6f} ({global_avg:.6f})"
         self.deque = deque(maxlen=window_size)
@@ -295,7 +313,7 @@ def reduce_dict(input_dict, average=True):
 
 
 class MetricLogger(object):
-    def __init__(self, delimiter="\t", logger=None):
+    def __init__(self, delimiter=" ", logger=None, smooth=1):
         self.logger = logger
         self.meters = defaultdict(SmoothedValue)
         self.delimiter = delimiter
@@ -367,13 +385,13 @@ class MetricLogger(object):
                 eta_seconds = iter_time.global_avg * (len(iterable) - i)
                 eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
                 if torch.cuda.is_available():
-                    print(log_msg.format(
+                    self.log(log_msg.format(
                         i, len(iterable), eta=eta_string,
                         meters=str(self),
                         time=str(iter_time), data=str(data_time),
                         memory=torch.cuda.max_memory_allocated() / MB))
                 else:
-                    print(log_msg.format(
+                    self.log(log_msg.format(
                         i, len(iterable), eta=eta_string,
                         meters=str(self),
                         time=str(iter_time), data=str(data_time)))
@@ -381,12 +399,19 @@ class MetricLogger(object):
             end = time.time()
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-        print('{} Total time: {} ({:.6f} s / it)'.format(
+        self.log('{} Total time: {} ({:.6f} s / it)'.format(
             header, total_time_str, total_time / len(iterable)))
 
     def return_final_dict(self):
         self.synchronize_between_processes()
         return {k: meter.global_avg for k, meter in self.meters.items()}
+
+    def log(self, msg, *args, **kwargs):
+        if self.logger is None:
+            print(msg, *args, **kwargs)
+        else:
+            self.logger.info(msg, *args, **kwargs)
+
 
 
 def get_sha():

@@ -27,15 +27,16 @@ import copy
 
 BASE_CONFIG = {
     'base': {
-        'base_dir'  : './runs_debug/',
-        'experiment': "test_param1",
+        'base_dir': './runs_debug/',
+        'experiment': "",
         'tag': '',
         'stage': '', 
         'extag': '',
         'config': '',
         'test': False,
         'func': '',
-        'gpus': -1,
+        'gpus': '',
+        'ms': False,
         },    
     'logger':{
         'mode': None, # "wandb", "tensorboard", 'csv'
@@ -91,9 +92,13 @@ def _check_config(config):
 
 def trans_args(parser=None):
     if parser is None:
-        parser = argparse.ArgumentParser(description='Unwarp Film Train Configure')
+        parser = argparse.ArgumentParser(description='')
     try:
-        parser.add_argument("-t", "--tag", type=str, default="")
+        parser.add_argument("--base_dir", type=str, default="")
+    except:
+        print("Already add '--tag' ")
+    try:
+            parser.add_argument("-t", "--tag", type=str, default="")
     except:
         print("Already add '--tag' ")
     try:
@@ -125,7 +130,7 @@ def trans_args(parser=None):
     except:
         print("Already add '--ms' ")
     try:
-        parser.add_argument("--gpus", type=int, default=-1, help=" Turn on Multi stage mode ! ")
+        parser.add_argument("--gpus", type=str, default='', help=" Turn on Multi stage mode ! ")
     except:
         print("Already add '--gpus' ")
     args = parser.parse_args()
@@ -147,6 +152,9 @@ def trans_init(args=None, ex_config=None, file=None, clear_none=True, **kwargs):
                 "b" : copy the old dir
                 "n" : New an new dir by time
     """
+    assert isinstance(ex_config, dict), f"Got ex_config: {ex_config}"
+    assert isinstance(file, str), f"Got file: {file}"
+
     # Load yaml config file
     config=BASE_CONFIG
     #  --------  args.config < args < ex_config  ----------
@@ -158,6 +166,16 @@ def trans_init(args=None, ex_config=None, file=None, clear_none=True, **kwargs):
     ex_config = ex_config if ex_config is not None else {}
     # Clear some vars with None or ""
     arg_dict_special = vars(copy.deepcopy(args))
+
+    if clear_none:
+        file_config = _clear_config(file_config)
+        arg_dict_special = _clear_config(arg_dict_special)
+        ex_config   = _clear_config(ex_config)
+
+    # Merge file_config to base_config
+    config = merge_cascade_dict([config, file_config])
+
+    # merge arg_config to config
     for k, v in config['base'].items():
         if k in arg_dict_special.keys():
             config['base'][k] = arg_dict_special.pop(k)
@@ -165,12 +183,8 @@ def trans_init(args=None, ex_config=None, file=None, clear_none=True, **kwargs):
     print("debug: arg-dict")
     _print_dict(arg_dict)
 
-    if clear_none:
-        file_config = _clear_config(file_config)
-        arg_dict    = _clear_config(arg_dict)
-        ex_config   = _clear_config(ex_config)
-
-    config = merge_cascade_dict([config, file_config, arg_dict, ex_config])
+    # Merge ex-config to config
+    config = merge_cascade_dict([config, arg_dict, ex_config])
 
     return trans_configure(config, file=file, **kwargs)
 
@@ -179,6 +193,7 @@ def merge_cascade_dict(dicts):
     num_dict = len(dicts)
     ret_dict = {}
     for d in dicts:
+        assert isinstance(d, dict), f"Got d1: {d}"
         ret_dict = _merge_two_dict(ret_dict, d)
         # print("debug: ")
         # _print_dict(ret_dict['base'])
@@ -186,6 +201,10 @@ def merge_cascade_dict(dicts):
 
 def _merge_two_dict(d1, d2):
     # Use d2 to overlap d1
+    d1 = {} if d1 is None else d1
+    d2 = {} if d2 is None else d2
+    assert isinstance(d1, dict), f"Got d1: {d1}"
+    assert isinstance(d2, dict), f"Got d1: {d2}"
     ret_dict = {**d2, **d1}
     if isinstance(d2, dict):
         for key, value in d2.items():

@@ -9,3 +9,6 @@ pandas
 pyyaml
 yamlloader
 SimpleITK
+h5py
+xlwt
+openpyxl

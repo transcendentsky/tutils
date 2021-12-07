@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="trans-utils",
-    version="0.2.0",
+    version="0.2.1",
     author="Curliq",
     author_email="transcendentsiki@gmail.com",
     packages=find_packages(exclude=['test.*']),
@@ -20,6 +20,9 @@ setup(
       'pyyaml',
       'yamlloader',
       'SimpleITK',
+      'h5py',
+      'xlwt',
+      'openpyxl',
       # 'piq', # for ssim_loss
       # 'pyradiomics', # for radiomics
       # 'kornia>=0.4.0', 

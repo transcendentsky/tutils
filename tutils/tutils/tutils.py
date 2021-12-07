@@ -6,7 +6,11 @@ import os
 from .functools import d, _get_time_str, _ordereddict_to_dict
 from pathlib import Path
 from datetime import datetime
+from torchvision.utils import save_image as tv_save_image
 
+
+def save_image(tensor, fname:str="tmp/tmp.png"):
+    tv_save_image(tensor, fname)
 
 
 def time_str():

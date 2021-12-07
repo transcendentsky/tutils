@@ -156,8 +156,8 @@ class AblationTrainer(object):
         for i in range(self.config_len):
             config = self.config_list[i]
             params = self.params_list[i]
-            dump_yaml(self.logger, config, path="tmp/_tmp_config.yaml")
-            cmd = self.running_cmd + f" --config {'tmp/_tmp_config.yaml'}"
+            dump_yaml(self.logger, config, path=tfilename(self.runs_dir, "tmp/_tmp_config.yaml"))
+            cmd = self.running_cmd + f" --config {tfilename(self.runs_dir, 'tmp/_tmp_config.yaml')}"
 
             if self.auto_tag:
                 tag = self.abla_tags[i]

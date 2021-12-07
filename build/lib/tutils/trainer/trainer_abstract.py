@@ -173,7 +173,7 @@ class AbstractTrainer:
 
     def train(self, model, trainloader, epoch, optimizer, scheduler=None, do_training_log=True):
         model.train()
-
+        out = {}
         if do_training_log and self.logging_available:
             self.recorder.clear()
             time_record = 0.1111

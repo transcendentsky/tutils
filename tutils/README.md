@@ -140,3 +140,7 @@ windows:
 [global]
 index-url = https://pypi.tuna.tsinghua.edu.cn/simple
 ```
+
+# Upload to Pypi
+python setup.py bdist_wheel
+python -m twine upload dist/*
